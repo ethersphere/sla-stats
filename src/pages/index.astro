@@ -1,0 +1,194 @@
+---
+import '../styles/base.css';
+import Layout from '../layouts/Layout.astro';
+import Block from '../components/Block.astro';
+
+// await fetch data from https://sla.ethswarm.org/api/v1/all
+// and pass it as a prop to the Layout component
+const { chunk_retrieval_duration_all_time,
+		file_download_speed_24h,
+		upload_success_24h,
+		download_success_24h,
+		upload_success_all_time,
+		chunk_retrieval_rate_24h,
+		chunk_retrieval_duration_24h,
+		download_success_all_time,
+		file_retrieval_rate_24h,
+		file_download_speed_all_time
+	} = await fetch('https://sla.ethswarm.org/api/v1/all').then((res) => res.json());
+
+function round(value: number, decimals = 2) {
+	return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+
+---
+
+<Layout title="Swarm Dashboard">
+	<main class="pt-12 pb-24">
+
+		<div class="hidden text-[#00CA8E] text-[#4971FF] text-[#BF38FF] text-[#8D46FF] text-[#45E5E7] text-[#5AD2FE] from-[#5AD2FE] from-[#45E5E7] from-[#8D46FF] from-[#BF38FF]"></div>
+
+		<div class="flex justify-center"><img src="/swarm.png" alt="" class="h-8" /></div>
+
+		<div class="max-w-7xl mx-auto px-5 lg:px-8">
+			<div class="px-5 sm:px-[60px] my-[120px] sm:grid sm:grid-cols-2 lg:grid-cols-12 sm:gap-x-[22px] border border-transparent">
+				<h1 class="lg:col-span-7 text-[48px] font-bold tracking-[-0.48px]">Swarm Dashboard</h1>
+				<div class="lg:col-span-7 text-[19px] leading-[26px] mt-6">
+					<p>The Swarm dashboard offers vital insights into key metrics, such as availability, data durability, and network latency, including real time data and historical trends.</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="max-w-7xl mx-auto px-5 lg:px-8">
+		<div class="px-5 sm:px-[60px] pt-10 pb-16 sm:pt-20 sm:pb-28 rounded-lg border border-[#2D3843] bg-[#1F2831]/70 space-y-20 sm:space-y-36">
+		<Block
+			title="Network Availability"
+			description={`Network reliability as measured by upload and download success rates accross all <a href="https://docs.ethswarm.org/docs/learn/technology/disc#neighborhoods" target="_blank">neighborhoods</a>.`}
+			cards={[
+				{
+					title: '24 Hour Download Success Rate',
+					tooltip: 'Percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
+					color: '#00CA8E',
+					gradient: '00CA8E',
+					value: round(download_success_24h.values[download_success_24h.values.length - 1][1]),
+				},
+				{
+					title: 'All Time Download Success Rate',
+					tooltip: 'Overall percentage of successful downloads across all neighborhoods since the start of data tracking, computed over the entire data history.',
+					color: '#00CA8E',
+					gradient: 'green',
+					value: round(download_success_all_time.values[download_success_all_time.values.length - 1][1]),
+				},
+				{
+					title: '24 Hour Upload Success Rate',
+					tooltip: 'Percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
+					color: '#4971FF',
+					gradient: 'blue',
+					value: round(upload_success_24h.values[upload_success_24h.values.length - 1][1]),
+				},
+				{
+					title: 'All Time Upload Success Rate',
+					tooltip: 'Cumulative percentage of successful uploads across all neighborhoods since data collection began, calculated over the entire period.',
+					color: '#4971FF',
+					gradient: 'blue',
+					value: round(upload_success_all_time.values[upload_success_all_time.values.length - 1][1], 2),
+				}
+			]}
+			graphs={
+				[
+					{
+						id: 'download_success_24h',
+						title: '24 Hour Download Success Rate',
+						type: 'bar',
+						data: download_success_24h.values.slice(download_success_24h.values.length - 30, download_success_24h.values.length),
+					},
+					{
+						id: 'upload_success_24h',
+						title: '24 Hour Upload Success Rate',
+						type: 'bar',
+						data: upload_success_24h.values.slice(upload_success_24h.values.length - 30, upload_success_24h.values.length),
+					}
+				]
+			}
+		/>
+
+		<Block
+			title="Data Durability"
+			description={`The network’s capability to maintain data integrity over time.`}
+			cards={[
+				{
+					title: '24 Hour Chunk Retrieval Rate',
+					tooltip: 'Measures the percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
+					color: '#BF38FF',
+					gradient: 'magnetos',
+					value: round(chunk_retrieval_rate_24h.values[chunk_retrieval_rate_24h.values.length - 1][1]),
+				},
+				{
+					title: '24 Hour Large File Retrieval Rate',
+					tooltip: 'Evaluates the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
+					color: '#8D46FF',
+					gradient: 'candy-grape-fizz',
+					value: round(file_retrieval_rate_24h.values[file_retrieval_rate_24h.values.length - 1][1]),
+				},
+			]}
+			graphs={
+				[
+					{
+						id: 'chunk_retrieval_rate_24h',
+						title: '24 Hour Download Success Rate',
+						type: 'line',
+						data: chunk_retrieval_rate_24h.values.slice(chunk_retrieval_rate_24h.values.length - 30, chunk_retrieval_rate_24h.values.length),
+					},
+					{
+						id: 'file_retrieval_rate_24h',
+						title: '24 Hour Upload Success Rate',
+						type: 'line',
+						data: file_retrieval_rate_24h.values.slice(file_retrieval_rate_24h.values.length - 30, file_retrieval_rate_24h.values.length),
+					}
+				]
+			}
+		/>
+
+		<Block
+			title="Latency"
+			description={`Network response time and download speeds for both single chunks and large files.`}
+			cards={[
+				{
+					type: "number",
+					title: '24 Hour Average Chunk Retrieval Time',
+					tooltip: 'Presents the average time taken to retrieve a chunk in the last 24 hours, in milliseconds, calculated from the sum of all retrieval times and counts.',
+					color: '#45E5E7',
+					gradient: 'near-moon',
+					unit: 'ms',
+					value: round(chunk_retrieval_duration_24h.values[chunk_retrieval_duration_24h.values.length - 1][1]),
+				},
+				{
+					type: "number",
+					title: 'All Time Average Chunk Retrieval Time',
+					tooltip: 'Displays the long-term average time for chunk retrieval, in milliseconds, taking into account the entire period of data collection.',
+					color: '#45E5E7',
+					gradient: 'near-moon',
+					unit: 'ms',
+					value: round(chunk_retrieval_duration_all_time.values[chunk_retrieval_duration_all_time.values.length - 1][1]),
+				},
+				{
+					type: "number",
+					title: '24 Hour Average Download Speed of Large Files',
+					tooltip: 'Shows the average download speed for large files in the last 24 hours, in Mebibytes per second (MiB/s), based on file sizes and download durations.',
+					unit: 'MiB/s',
+					color: '#5AD2FE',
+					gradient: 'thors-thunder',
+					value: round(file_download_speed_24h.values[file_download_speed_24h.values.length - 1][1]),
+				},
+				{
+					type: "number",
+					title: 'All Time Average Download Speed of Large Files',
+					tooltip: 'Indicates the cumulative average download speed of large files, in MiB/s, calculated over the entire data collection period.',
+					color: '#5AD2FE',
+					gradient: 'thors-thunder',
+					unit: 'MiB/s',
+					value: round(file_download_speed_all_time.values[file_download_speed_all_time.values.length - 1][1], 2),
+				}
+			]}
+			graphs={
+				[
+					{
+						id: 'chunk_retrieval_duration_24h',
+						title: '24 Hour Average Chunk Retrieval Time',
+						type: 'bar',
+						data: chunk_retrieval_duration_24h.values.slice(chunk_retrieval_duration_24h.values.length - 30, chunk_retrieval_duration_24h.values.length),
+					},
+					{
+						id: 'file_download_speed_24h',
+						title: '24 Hour Average Download Speed of Large Files',
+						type: 'bar',
+						data: file_download_speed_24h.values.slice(file_download_speed_24h.values.length - 30, file_download_speed_24h.values.length),
+					}
+				]
+			}
+		/>
+		</div>
+		</div>
+	</main>
+
+</Layout>

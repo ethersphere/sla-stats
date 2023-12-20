@@ -1,0 +1,235 @@
+---
+interface Props {
+	title: string;
+    description: string;
+    cards: {
+        type?: 'percentage' | 'number';
+        title: string;
+        value: number;
+        color: string;
+        tooltip?: string;
+        unit?: string;
+        gradient?: string;
+    }[];
+    graphs: {
+        id: string;
+        type: 'line' | 'bar';
+        title: string;
+        data: (string|number)[][];
+    }[];
+}
+
+const { title, description, cards, graphs } = Astro.props;
+---
+<div>
+    <div class="sm:grid sm:grid-cols-2 lg:grid-cols-12 gap-[22px]">
+        <h2 class="lg:col-span-7 text-2xl font-bold">{title}</h2>
+        <div class="col-span-7 mt-4 sm:mt-0" set:html={description}></div>
+    </div>
+
+    {cards.length > 0 && (
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-[22px] my-12 sm:my-16">
+            {cards.map(({title, type = "percentage", value, unit = "%", color, tooltip = false}, index) => (
+                <div class={`@container${(cards.length === 2 && index === 1 ? " lg:col-start-3" : "")}`}>
+                    {type === "percentage" && (
+                        <div class="rounded-full aspect-square bg-[#2D3843]/60 p-[5.46875cqw] flex flex-col items-center justify-center text-center font-bold border-[3.125cqw] border-[#2D3843]">
+
+
+                        <svg class="-rotate-90 absolute w-[calc(100%-6.25cqw)] h-[calc(100%-6.25cqw)]" class="round" viewBox="0 0 239 239" fill="none"  >
+                            <circle cx="119.5" cy="119.5" r="109.5" pathLength="100" stroke-width="20" stroke-linejoin="round" stroke={`${color}`} stroke-dasharray={(value + 0.1) + " 999"} />
+                        </svg>
+
+                        <div class={`mx-auto w-[62.5cqw] text-[11.5cqw] text-[${color}]` }>{value} {unit}</div>
+                        <div class="mt-[1.5625cqw] w-[55cqw] text-[4.6875cqw] leading-[7.421875cqw]">
+                            {title}
+                        </div>
+                        </div>
+                    )}
+
+                    {type === "number" && (
+                        <div class="aspect-square bg-[#2D3843]/60 px-[10.9375cqw] pt-[18.75cqw] font-bold border-[3.125cqw] border-[#2D3843] rounded-xl">
+                            <div class={`h-[7.8125cqw] w-full bg-gradient-to-l from-[${color}]`}></div>
+                            <div class={`mt-[12.5cqw] text-[11.5cqw] text-[${color}]` }>{value} {unit}</div>
+                            <div class="mt-[1.5625cqw] w-[55cqw] text-[4.6875cqw] leading-[7.421875cqw]">
+                                {title}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    )}
+
+    {graphs.length > 0 && (
+        <div class="lg:grid lg:grid-cols-2 lg:gap-5 space-y-8 lg:space-y-0">
+        {graphs.map((graph) => (
+            <div class="p-5 sm:pb-12 sm:px-9 sm:pt-10 bg-[#2D3843] rounded-xl h-[280px] md:h-auto">
+                <div class="text-center mx-auto max-w-full text-xs font-bold mb-12">{graph.title}</div>
+                <canvas class="" data-data={JSON.stringify(graph.data)} id={graph.id}></canvas>
+            </div>
+        ))}
+        </div>
+    )}
+</div>
+
+<script>
+    import Chart from 'chart.js/auto';
+
+    (async function() {
+        const elements = document.querySelectorAll('canvas');
+        Chart.defaults.color = '#737980';
+        Chart.defaults.font.family = 'Inter';
+
+        const baseOptions = ({
+            labels,
+            data,
+            backgroundColor,
+            pointBorderColor,
+            pointBackgroundColor,
+            min,
+            max,
+            gridColor
+        }: any) => {
+            return {
+            type: 'line',
+             data: {
+                labels,
+                datasets: [
+                {
+                    tension: 0.25,
+                    label: '',
+                    fillColor: backgroundColor,
+                    fill: true,
+                    data,
+                    pointBorderColor,
+                    pointBackgroundColor,
+                    backgroundColor,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                // responsive: true,
+                // maintainAspectRatio: false,
+                clip: false,
+                scales: {
+                    y: {
+                        min,
+                        max,
+                        border: {
+                            display: false,
+                        },
+                        grid: {
+                            color: gridColor,
+                            drawTicks: true,
+                        },
+                    },
+                    x: {
+                        display: false,
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    }
+                }
+            }
+        }
+        }
+
+        for (const element of elements) {
+            const ctx = element.getContext("2d");
+            const data = JSON.parse(element.dataset.data ?? '[]')
+
+            // @ts-ignore
+            const gradientGreen = ctx.createLinearGradient(0, 0, 0, 240);
+            gradientGreen.addColorStop(0, 'rgba(0,188,133,1)');
+            gradientGreen.addColorStop(1, 'rgba(0,188,133,0)');
+
+            // @ts-ignore
+            const gradientBlue = ctx.createLinearGradient(0, 0, 0, 240);
+            gradientBlue.addColorStop(0, 'rgba(71,102,248,1)');
+            gradientBlue.addColorStop(1, 'rgba(71,102,248,0)');
+
+            // @ts-ignore
+            const gradientMagnetos = ctx.createLinearGradient(0, 0, 0, 240);
+            gradientMagnetos.addColorStop(0, 'rgba(167,64,248,1)');
+            gradientMagnetos.addColorStop(1, 'rgba(167,64,248,0)');
+
+            // @ts-ignore
+            const gradientCandyGrapeFizz = ctx.createLinearGradient(0, 0, 0, 240);
+            gradientCandyGrapeFizz.addColorStop(0, 'rgba(120,69,248,1)');
+            gradientCandyGrapeFizz.addColorStop(1, 'rgba(120,69,248,0)');
+
+            // @ts-ignore
+            const gradientNearMoon = ctx.createLinearGradient(0, 0, 0, 240);
+            gradientNearMoon.addColorStop(0, 'rgba(107,220,226,1)');
+            gradientNearMoon.addColorStop(1, 'rgba(107,220,226,0)');
+
+            // @ts-ignore
+            const gradientThorsThunder = ctx.createLinearGradient(0, 0, 0, 240);
+            gradientThorsThunder.addColorStop(0, 'rgba(110,200,250,1)');
+            gradientThorsThunder.addColorStop(1, 'rgba(110,200,250,0)');
+
+            // download_success_24h green, 75-100
+            // upload_success_24h blue, 75-100
+            // chunk_retrieval_rate_24h Magnetos 75-100
+            // file_retrieval_rate_24h CandyGrapeFizz 75-100
+            // chunk_retrieval_duration_24h, NearMoon 0-150
+            // file_download_speed_24h ThorsThunder 0-2
+
+            let options = baseOptions({
+                    // @ts-ignore
+                    labels: data.map(row => row[0]),
+                    // @ts-ignore
+                    data: data.map(row => row[1]),
+                    backgroundColor: gradientGreen,
+                    pointBorderColor: '#7A8E8F',
+                    pointBackgroundColor: '#2D3843',
+                    min: 75,
+                    max: 100,
+                    gridColor: '#37434F'
+            });
+
+            if (element.id === "upload_success_24h") {
+                options.data.datasets[0].fillColor = gradientBlue;
+                options.data.datasets[0].backgroundColor = gradientBlue;
+            }
+
+            if (element.id === "file_retrieval_rate_24h") {
+                options.data.datasets[0].fillColor = gradientCandyGrapeFizz;
+                options.data.datasets[0].backgroundColor = gradientCandyGrapeFizz;
+            }
+
+            if (element.id === "chunk_retrieval_rate_24h") {
+                options.data.datasets[0].fillColor = gradientMagnetos;
+                options.data.datasets[0].backgroundColor = gradientMagnetos;
+            }
+
+            if (element.id === "chunk_retrieval_duration_24h") {
+                options.data.datasets[0].fillColor = gradientNearMoon;
+                options.data.datasets[0].backgroundColor = gradientNearMoon;
+                options.options.scales.y.min = 50;
+                options.options.scales.y.max = 150;
+            }
+
+            if (element.id === "file_download_speed_24h") {
+                options.data.datasets[0].fillColor = gradientThorsThunder;
+                options.data.datasets[0].backgroundColor = gradientThorsThunder;
+                options.options.scales.y.min = 0.75;
+                options.options.scales.y.max = 1.25;
+            }
+
+            new Chart(
+                element,
+                // @ts-ignore
+                options
+            );
+        }
+    })();
+</script>
+
+
