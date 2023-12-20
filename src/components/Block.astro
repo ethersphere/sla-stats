@@ -3,6 +3,7 @@ interface Props {
 	title: string;
     description: string;
     cards: {
+        id: string;
         type?: 'percentage' | 'number';
         title: string;
         value: number;
@@ -15,6 +16,7 @@ interface Props {
         id: string;
         type: 'line' | 'bar';
         title: string;
+        tooltip?: string;
         data: (string|number)[][];
     }[];
 }
@@ -29,29 +31,41 @@ const { title, description, cards, graphs } = Astro.props;
 
     {cards.length > 0 && (
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-[22px] my-12 sm:my-16">
-            {cards.map(({title, type = "percentage", value, unit = "%", color, tooltip = false}, index) => (
-                <div class={`@container${(cards.length === 2 && index === 1 ? " lg:col-start-3" : "")}`}>
+            {cards.map(({id, title, type = "percentage", value, unit = "%", color, tooltip = false}, index) => (
+                <div class={`relative${(cards.length === 2 && index === 1 ? " lg:col-start-3" : "")}`}>
                     {type === "percentage" && (
-                        <div class="rounded-full aspect-square bg-[#2D3843]/60 p-[5.46875cqw] flex flex-col items-center justify-center text-center font-bold border-[3.125cqw] border-[#2D3843]">
+                        <div class="rounded-full aspect-square bg-[#2D3843]/60 p-[14px] flex flex-col items-center justify-center text-center font-bold border-[8px] border-[#2D3843]">
 
 
-                        <svg class="-rotate-90 absolute w-[calc(100%-6.25cqw)] h-[calc(100%-6.25cqw)]" class="round" viewBox="0 0 239 239" fill="none"  >
+                        <svg class="pointer-events-none -rotate-90 absolute w-[calc(100%-16px)] h-[calc(100%-16px)] z-10" class="round" viewBox="0 0 239 239" fill="none"  >
                             <circle cx="119.5" cy="119.5" r="109.5" pathLength="100" stroke-width="20" stroke-linejoin="round" stroke={`${color}`} stroke-dasharray={(value + 0.1) + " 999"} />
                         </svg>
 
-                        <div class={`mx-auto w-[62.5cqw] text-[11.5cqw] text-[${color}]` }>{value} {unit}</div>
-                        <div class="mt-[1.5625cqw] w-[55cqw] text-[4.6875cqw] leading-[7.421875cqw]">
+                        <div class={`mx-auto w-[160px] text-[30px] text-[${color}]` }>{value} {unit}</div>
+                        <div class="mt-1 w-[140px] text-xs leading-[19px]">
                             {title}
+                            {tooltip !== false && (
+                                    <button id={id} aria-describedby="tooltip" data-tooltip-button={id}>
+                                    <svg class="pl-1.5 w-[20px] h-[14px] inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><g clip-path="url(#a)"><path stroke="#F6F7F9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M7 13.125A6.125 6.125 0 1 0 7 .875a6.125 6.125 0 0 0 0 12.25Z"/><path fill="#F6F7F9" d="M7 5.25A.875.875 0 1 0 7 3.5a.875.875 0 0 0 0 1.75Z"/><path stroke="#F6F7F9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M7 9.625V7"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h14v14H0z"/></clipPath></defs></svg>
+                                    </button>
+                                    <div id={`tooltip_${id}`} data-tooltip={id} role="tooltip" class="hidden rounded-xl py-6 px-5 bg-[#1F2831] border text-left border-[#2D3843] absolute w-max max-w-[256px] top-0 left-0 font-normal z-20">{tooltip}</div>
+                                )}
                         </div>
                         </div>
                     )}
 
                     {type === "number" && (
-                        <div class="aspect-square bg-[#2D3843]/60 px-[10.9375cqw] pt-[18.75cqw] font-bold border-[3.125cqw] border-[#2D3843] rounded-xl">
-                            <div class={`h-[7.8125cqw] w-full bg-gradient-to-l from-[${color}]`}></div>
-                            <div class={`mt-[12.5cqw] text-[11.5cqw] text-[${color}]` }>{value} {unit}</div>
-                            <div class="mt-[1.5625cqw] w-[55cqw] text-[4.6875cqw] leading-[7.421875cqw]">
+                        <div class="aspect-square bg-[#2D3843]/60 px-[28px] pt-12 font-bold border-[8px] border-[#2D3843] rounded-xl">
+                            <div class={`h-5 w-full bg-gradient-to-l from-[${color}]`}></div>
+                            <div class={`mt-8 text-[30px] text-[${color}]` }>{value} {unit}</div>
+                            <div class="mt-1 w-[148px] text-xs leading-[19px]">
                                 {title}
+                                {tooltip !== false && (
+                                    <button id={id} aria-describedby="tooltip" data-tooltip-button={id}>
+                                    <svg class="pl-1.5 w-[20px] h-[14px] inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><g clip-path="url(#a)"><path stroke="#F6F7F9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M7 13.125A6.125 6.125 0 1 0 7 .875a6.125 6.125 0 0 0 0 12.25Z"/><path fill="#F6F7F9" d="M7 5.25A.875.875 0 1 0 7 3.5a.875.875 0 0 0 0 1.75Z"/><path stroke="#F6F7F9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M7 9.625V7"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h14v14H0z"/></clipPath></defs></svg>
+                                    </button>
+                                    <div id={`tooltip_${id}`} data-tooltip={id} role="tooltip" class="hidden rounded-xl py-6 px-5 bg-[#1F2831] border text-left border-[#2D3843] absolute w-max max-w-[256px] top-0 left-0 font-normal z-20">{tooltip}</div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -62,10 +76,18 @@ const { title, description, cards, graphs } = Astro.props;
 
     {graphs.length > 0 && (
         <div class="lg:grid lg:grid-cols-2 lg:gap-5 space-y-8 lg:space-y-0">
-        {graphs.map((graph) => (
+        {graphs.map(({title, tooltip = false, id, data}) => (
             <div class="p-5 sm:pb-12 sm:px-9 sm:pt-10 bg-[#2D3843] rounded-xl h-[280px] md:h-auto">
-                <div class="text-center mx-auto max-w-full text-xs font-bold mb-12">{graph.title}</div>
-                <canvas class="" data-data={JSON.stringify(graph.data)} id={graph.id}></canvas>
+                <div class="text-center mx-auto max-w-full text-xs font-bold mb-12">
+                    {title}
+                    {tooltip !== false && (
+                        <button id={id} aria-describedby="tooltip" data-tooltip-button={id}>
+                        <svg class="pl-1.5 w-[20px] h-[14px] inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><g clip-path="url(#a)"><path stroke="#F6F7F9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M7 13.125A6.125 6.125 0 1 0 7 .875a6.125 6.125 0 0 0 0 12.25Z"/><path fill="#F6F7F9" d="M7 5.25A.875.875 0 1 0 7 3.5a.875.875 0 0 0 0 1.75Z"/><path stroke="#F6F7F9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M7 9.625V7"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h14v14H0z"/></clipPath></defs></svg>
+                        </button>
+                        <div id={`tooltip_${id}`} data-tooltip={id} role="tooltip" class="hidden rounded-xl py-6 px-5 bg-[#1F2831] border text-left border-[#2D3843] absolute w-max max-w-[256px] top-0 left-0 font-normal z-20">{tooltip}</div>
+                    )}
+                </div>
+                <canvas class="" data-data={JSON.stringify(data)} id={id}></canvas>
             </div>
         ))}
         </div>
@@ -74,8 +96,54 @@ const { title, description, cards, graphs } = Astro.props;
 
 <script>
     import Chart from 'chart.js/auto';
+    import { computePosition, flip, shift, offset } from '@floating-ui/dom';
+
+    const tooltips = document.querySelectorAll('[data-tooltip-button]');
+
+    for (const button of tooltips) {
+        // @ts-ignore
+        const id = button.dataset.tooltipButton;
+        const tooltip = document.querySelector(`[data-tooltip="${id}"]`) as HTMLElement;
+
+        function update() {
+            computePosition(button, tooltip, {
+                placement: 'bottom',
+                middleware: [
+                    offset(6),
+                    flip(),
+                    shift({padding: 8}),
+                ],
+            }).then(({x, y}) => {
+                Object.assign(tooltip.style, {
+                    left: `${x}px`,
+                    top: `${y}px`,
+                });
+            });
+        }
+
+        function showTooltip() {
+            console.log('show');
+            tooltip.style.display = 'block';
+            update();
+        }
+
+        function hideTooltip() {
+            tooltip.style.display = '';
+        }
+
+        [
+            ['mouseenter', showTooltip],
+            ['mouseleave', hideTooltip],
+            ['focus', showTooltip],
+            ['blur', hideTooltip],
+        ].forEach(([event, listener]) => {
+            // @ts-ignore
+            button.addEventListener(event, listener);
+        });
+    }
 
     (async function() {
+
         const elements = document.querySelectorAll('canvas');
         Chart.defaults.color = '#737980';
         Chart.defaults.font.family = 'Inter';
