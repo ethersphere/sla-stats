@@ -43,11 +43,11 @@ function round(value: number, decimals = 2) {
 		<div class="px-5 sm:px-[60px] pt-10 pb-16 sm:pt-20 sm:pb-28 rounded-lg border border-[#2D3843] bg-[#1F2831]/70 space-y-20 sm:space-y-36">
 		<Block
 			title="Network Availability"
-			description={`Network reliability as measured by upload and download success rates accross all <a href="https://docs.ethswarm.org/docs/learn/technology/disc#neighborhoods" target="_blank">neighborhoods</a>.`}
+			description={`Network reliability as measured by upload and download success rates accross all <a href="https://docs.ethswarm.org/docs/learn/technology/disc#neighborhoods" target="_blank">neighborhoods</a> without respect to long-term retrievability.`}
 			cards={[
 				{
 					id: 'download_success_24',
-					title: '24 Hour Download Success Rate',
+					title: '24 Hour Neighborhood Download Availability Rate',
 					tooltip: 'Percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
 					color: '#00CA8E',
 					gradient: '00CA8E',
@@ -55,7 +55,7 @@ function round(value: number, decimals = 2) {
 				},
 				{
 					id: 'download_success_all',
-					title: 'All Time Download Success Rate',
+					title: 'All Time Neighborhood Download Availability Rate',
 					tooltip: 'Overall percentage of successful downloads across all neighborhoods since the start of data tracking, computed over the entire data history.',
 					color: '#00CA8E',
 					gradient: 'green',
@@ -63,7 +63,7 @@ function round(value: number, decimals = 2) {
 				},
 				{
 					id: 'upload_success_24',
-					title: '24 Hour Upload Success Rate',
+					title: '24 Hour Neighborhood Upload Availability Rate',
 					tooltip: 'Percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
 					color: '#4971FF',
 					gradient: 'blue',
@@ -71,7 +71,7 @@ function round(value: number, decimals = 2) {
 				},
 				{
 					id: 'upload_success_all',
-					title: 'All Time Upload Success Rate',
+					title: 'All Time Neighborhood Upload Availability Rate',
 					tooltip: 'Cumulative percentage of successful uploads across all neighborhoods since data collection began, calculated over the entire period.',
 					color: '#4971FF',
 					gradient: 'blue',
@@ -82,14 +82,14 @@ function round(value: number, decimals = 2) {
 				[
 					{
 						id: 'download_success_24h',
-						title: '24 Hour Download Success Rate',
+						title: 'Daily Neighborhood Download Availability Rate (Percent / Day)',
 						type: 'bar',
 						tooltip: 'Time series graph of the percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
 						data: download_success_24h.values.slice(download_success_24h.values.length - 30, download_success_24h.values.length),
 					},
 					{
 						id: 'upload_success_24h',
-						title: '24 Hour Upload Success Rate',
+						title: 'Daily Neighborhood Upload Availability Rate (Percent / Day)',
 						type: 'bar',
 						tooltip: 'Time series graph of the percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
 						data: upload_success_24h.values.slice(upload_success_24h.values.length - 30, upload_success_24h.values.length),
@@ -100,11 +100,11 @@ function round(value: number, decimals = 2) {
 
 		<Block
 			title="Data Durability"
-			description={`The network’s capability to maintain data integrity over time.`}
+			description={`The retrievability of both chunks and large files over extended time periods.`}
 			cards={[
 				{
 					id: 'chunk_retrieval_rate_24',
-					title: '24 Hour Chunk Retrieval Rate',
+					title: '24 Hour Chunk Retrieval Success Rate',
 					tooltip: 'Measures the percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
 					color: '#BF38FF',
 					gradient: 'magnetos',
@@ -112,7 +112,7 @@ function round(value: number, decimals = 2) {
 				},
 				{
 					id: 'file_retrieval_rate_24',
-					title: '24 Hour Large File Retrieval Rate',
+					title: '24 Hour File Retrieval Success Rate',
 					tooltip: 'Evaluates the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
 					color: '#8D46FF',
 					gradient: 'candy-grape-fizz',
@@ -123,14 +123,14 @@ function round(value: number, decimals = 2) {
 				[
 					{
 						id: 'chunk_retrieval_rate_24h',
-						title: '24 Hour Download Success Rate',
+						title: 'Daily Chunk Retrieval Success Rate (Percent / Day)',
 						type: 'line',
 						tooltip: 'Time series graph of percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
 						data: chunk_retrieval_rate_24h.values.slice(chunk_retrieval_rate_24h.values.length - 30, chunk_retrieval_rate_24h.values.length),
 					},
 					{
 						id: 'file_retrieval_rate_24h',
-						title: '24 Hour Upload Success Rate',
+						title: 'Daily Large File Retrieval Success Rate (Percent / Day)',
 						type: 'line',
 						tooltip: 'Time series graph of the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
 						data: file_retrieval_rate_24h.values.slice(file_retrieval_rate_24h.values.length - 30, file_retrieval_rate_24h.values.length),
@@ -188,14 +188,14 @@ function round(value: number, decimals = 2) {
 				[
 					{
 						id: 'chunk_retrieval_duration_24h',
-						title: '24 Hour Average Chunk Retrieval Time',
+						title: 'Daily Average Chunk Retrieval Time (Milliseconds / Day)',
 						type: 'bar',
 						tooltip: 'Time series graph of the average time taken to retrieve a chunk in the last 24 hours, in milliseconds, calculated from the sum of all retrieval times and counts.',
 						data: chunk_retrieval_duration_24h.values.slice(chunk_retrieval_duration_24h.values.length - 30, chunk_retrieval_duration_24h.values.length),
 					},
 					{
 						id: 'file_download_speed_24h',
-						title: '24 Hour Average Download Speed of Large Files',
+						title: 'Daily Average Chunk Retrieval Time (MiBps / Day)',
 						type: 'bar',
 						tooltip: 'Time series graph if the average download speed for large files in the last 24 hours, in Mebibytes per second (MiB/s), based on file sizes and download durations.',
 						data: file_download_speed_24h.values.slice(file_download_speed_24h.values.length - 30, file_download_speed_24h.values.length),
