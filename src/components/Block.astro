@@ -278,17 +278,32 @@ const { title, description, cards, graphs } = Astro.props;
             }
 
             if (element.id === "chunk_retrieval_duration_24h") {
+                console.log(data);
                 options.data.datasets[0].fillColor = gradientNearMoon;
                 options.data.datasets[0].backgroundColor = gradientNearMoon;
-                options.options.scales.y.min = 50;
-                options.options.scales.y.max = 150;
+
+                let min = data.reduce((min: number, row: any) => Math.min(min, row[1]), 60);
+                min = Math.floor(min / 10) * 10 - 10;
+
+                let max = data.reduce((max: number, row: any) => Math.max(max, row[1]), 140);
+                max = Math.ceil(max / 10) * 10 + 10;
+
+                options.options.scales.y.min = min;
+                options.options.scales.y.max = max;
             }
 
             if (element.id === "file_download_speed_24h") {
                 options.data.datasets[0].fillColor = gradientThorsThunder;
                 options.data.datasets[0].backgroundColor = gradientThorsThunder;
-                options.options.scales.y.min = 0.75;
-                options.options.scales.y.max = 1.25;
+
+                let min = data.reduce((min: number, row: any) => Math.min(min, row[1]), 0.8);
+                min = Math.floor(min * 20) / 20 - 0.05;
+
+                let max = data.reduce((max: number, row: any) => Math.max(max, row[1]), 1.3);
+                max = Math.ceil(max * 20) / 20 + 0.05;
+
+                options.options.scales.y.min = min;
+                options.options.scales.y.max = max;
             }
 
             new Chart(
