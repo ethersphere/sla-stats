@@ -122,7 +122,6 @@ const { title, description, cards, graphs } = Astro.props;
         }
 
         function showTooltip() {
-            console.log('show');
             tooltip.style.display = 'block';
             update();
         }
@@ -268,17 +267,20 @@ const { title, description, cards, graphs } = Astro.props;
             }
 
             if (element.id === "file_retrieval_rate_24h") {
+                 options.options.scales.y.min = 0;
+                options.options.scales.y.max = 100;
                 options.data.datasets[0].fillColor = gradientCandyGrapeFizz;
                 options.data.datasets[0].backgroundColor = gradientCandyGrapeFizz;
             }
 
             if (element.id === "chunk_retrieval_rate_24h") {
+                options.options.scales.y.min = 0;
+                options.options.scales.y.max = 100;
                 options.data.datasets[0].fillColor = gradientMagnetos;
                 options.data.datasets[0].backgroundColor = gradientMagnetos;
             }
 
             if (element.id === "chunk_retrieval_duration_24h") {
-                console.log(data);
                 options.data.datasets[0].fillColor = gradientNearMoon;
                 options.data.datasets[0].backgroundColor = gradientNearMoon;
 
