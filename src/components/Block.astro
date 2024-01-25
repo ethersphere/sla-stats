@@ -32,7 +32,7 @@ const { title, description, cards, graphs } = Astro.props;
     {cards.length > 0 && (
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-[22px] my-12 sm:my-16">
             {cards.map(({id, title, type = "percentage", value, unit = "%", color, tooltip = false}, index) => (
-                <div class={`relative${(cards.length === 2 && index === 1 ? " lg:col-start-3" : "")}`}>
+                <div class={`relative${(cards.length === 2 ? " lg:col-span-2 w-1/2 mx-auto" : "")}`}>
                     {type === "percentage" && (
                         <div class="rounded-full aspect-square bg-[#2D3843]/60 p-[14px] flex flex-col items-center justify-center text-center font-bold border-[8px] border-[#2D3843]">
 
@@ -158,7 +158,7 @@ const { title, description, cards, graphs } = Astro.props;
             gridColor
         }: any) => {
             return {
-            type: 'line',
+            type: 'bar',
              data: {
                 labels,
                 datasets: [
@@ -172,7 +172,14 @@ const { title, description, cards, graphs } = Astro.props;
                     pointBackgroundColor,
                     backgroundColor,
                     pointRadius: 4,
-                    pointHoverRadius: 6
+                    pointHoverRadius: 6,
+                    borderWidth: {
+                        top: 1,
+                        left: 0,
+                        right: 0,
+                        bottom: 0
+                    },
+                    borderColor: 'white',
                 }]
             },
             options: {
@@ -256,7 +263,7 @@ const { title, description, cards, graphs } = Astro.props;
                     backgroundColor: gradientGreen,
                     pointBorderColor: '#7A8E8F',
                     pointBackgroundColor: '#2D3843',
-                    min: 75,
+                    min: 0,
                     max: 100,
                     gridColor: '#37434F'
             });
