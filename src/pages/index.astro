@@ -51,7 +51,7 @@ function round(value: number, decimals = 2) {
 					tooltip: 'Percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
 					color: '#00CA8E',
 					gradient: '00CA8E',
-					value: round(download_success_24h.values[download_success_24h.values.length - 1][1]),
+					value: download_success_24h.values.length > 0 ? round(download_success_24h.values[download_success_24h.values.length - 1][1]) : 0,
 				},
 				{
 					id: 'download_success_all',
@@ -59,7 +59,7 @@ function round(value: number, decimals = 2) {
 					tooltip: 'Overall percentage of successful downloads across all neighborhoods since the start of data tracking, computed over the entire data history.',
 					color: '#00CA8E',
 					gradient: 'green',
-					value: round(download_success_all_time.values[download_success_all_time.values.length - 1][1]),
+					value: download_success_all_time.values.length > 0 ? round(download_success_all_time.values[download_success_all_time.values.length - 1][1]) : 0,
 				},
 				{
 					id: 'upload_success_24',
@@ -67,7 +67,7 @@ function round(value: number, decimals = 2) {
 					tooltip: 'Percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
 					color: '#4971FF',
 					gradient: 'blue',
-					value: round(upload_success_24h.values[upload_success_24h.values.length - 1][1]),
+					value: upload_success_24h.values.length > 0 ? round(upload_success_24h.values[upload_success_24h.values.length - 1][1]) : 0,
 				},
 				{
 					id: 'upload_success_all',
@@ -75,7 +75,7 @@ function round(value: number, decimals = 2) {
 					tooltip: 'Cumulative percentage of successful uploads across all neighborhoods since data collection began, calculated over the entire period.',
 					color: '#4971FF',
 					gradient: 'blue',
-					value: round(upload_success_all_time.values[upload_success_all_time.values.length - 1][1], 2),
+					value: upload_success_all_time.values.length > 0 ? round(upload_success_all_time.values[upload_success_all_time.values.length - 1][1], 2) : 0,
 				}
 			]}
 			graphs={
@@ -151,7 +151,7 @@ function round(value: number, decimals = 2) {
 					color: '#45E5E7',
 					gradient: 'near-moon',
 					unit: 'ms',
-					value: round(chunk_retrieval_duration_24h.values[chunk_retrieval_duration_24h.values.length - 1][1]),
+					value: chunk_retrieval_duration_24h.values.length > 0 ?round(chunk_retrieval_duration_24h.values[chunk_retrieval_duration_24h.values.length - 1][1]) : 0,
 				},
 				{
 					id: 'chunk_retrieval_duration_all',
@@ -161,7 +161,7 @@ function round(value: number, decimals = 2) {
 					color: '#45E5E7',
 					gradient: 'near-moon',
 					unit: 'ms',
-					value: round(chunk_retrieval_duration_all_time.values[chunk_retrieval_duration_all_time.values.length - 1][1]),
+					value: chunk_retrieval_duration_all_time.values.length > 0 ? round(chunk_retrieval_duration_all_time.values[chunk_retrieval_duration_all_time.values.length - 1][1]) : 0,
 				},
 				{
 					id: "file_download_speed_24",
@@ -171,7 +171,7 @@ function round(value: number, decimals = 2) {
 					unit: 'MiB/s',
 					color: '#5AD2FE',
 					gradient: 'thors-thunder',
-					value: round(file_download_speed_24h.values[file_download_speed_24h.values.length - 1][1]),
+					value: file_download_speed_24h.values.length > 0 ?round(file_download_speed_24h.values[file_download_speed_24h.values.length - 1][1]) : 0,
 				},
 				{
 					id: "file_download_speed_all",
@@ -181,7 +181,7 @@ function round(value: number, decimals = 2) {
 					color: '#5AD2FE',
 					gradient: 'thors-thunder',
 					unit: 'MiB/s',
-					value: round(file_download_speed_all_time.values[file_download_speed_all_time.values.length - 1][1], 2),
+					value: file_download_speed_all_time.values.length > 0 ? round(file_download_speed_all_time.values[file_download_speed_all_time.values.length - 1][1], 2) : 0,
 				}
 			]}
 			graphs={
