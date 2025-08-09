@@ -3,7 +3,7 @@ import '../styles/base.css';
 import Layout from '../layouts/Layout.astro';
 import Block from '../components/Block.astro';
 
-// --- FIX: Define the "shape" of our data for TypeScript ---
+// --- Define the "shape" of our data for TypeScript ---
 interface DataSeries {
 	values: [number, number][];
 }
@@ -23,7 +23,7 @@ interface ApiData {
 // --- End of type definitions ---
 
 
-// This now uses the types we defined above.
+// Robust data fetching with type safety
 let apiData: Partial<ApiData> = {};
 try {
 	const response = await fetch('https://sla.ethswarm.org/api/v1/all');
@@ -50,16 +50,9 @@ const {
 } = apiData;
 
 
-// FIX: Add types to function parameters
+// Typed rounding function
 function round(value: number, decimals = 2): number {
 	return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
-}
-
-// FIX: Add types to function parameters
-function getLastValue(dataSeries: DataSeries): number {
-	if (!dataSeries || !Array.isArray(dataSeries.values)) return 0;
-    const lastEntry = dataSeries.values[dataSeries.values.length - 1];
-    return lastEntry?.[1] ?? 0;
 }
 ---
 
@@ -91,7 +84,8 @@ function getLastValue(dataSeries: DataSeries): number {
 					tooltip: 'Percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
 					color: '#00CA8E',
 					gradient: '00CA8E',
-					value: round(getLastValue(download_success_24h)),
+                    {/* FIX: Inlined the data query logic, safely */}
+					value: round(download_success_24h.values[download_success_24h.values.length - 1]?.[1] ?? 0),
 				},
 				{
 					id: 'download_success_all',
@@ -99,7 +93,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					tooltip: 'Overall percentage of successful downloads across all neighborhoods since the start of data tracking, computed over the entire data history.',
 					color: '#00CA8E',
 					gradient: 'green',
-					value: round(getLastValue(download_success_all_time)),
+					value: round(download_success_all_time.values[download_success_all_time.values.length - 1]?.[1] ?? 0),
 				},
 				{
 					id: 'upload_success_24',
@@ -107,7 +101,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					tooltip: 'Percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
 					color: '#4971FF',
 					gradient: 'blue',
-					value: round(getLastValue(upload_success_24h)),
+					value: round(upload_success_24h.values[upload_success_24h.values.length - 1]?.[1] ?? 0),
 				},
 				{
 					id: 'upload_success_all',
@@ -115,7 +109,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					tooltip: 'Cumulative percentage of successful uploads across all neighborhoods since data collection began, calculated over the entire period.',
 					color: '#4971FF',
 					gradient: 'blue',
-					value: round(getLastValue(upload_success_all_time), 2),
+					value: round(upload_success_all_time.values[upload_success_all_time.values.length - 1]?.[1] ?? 0, 2),
 				}
 			]}
 			graphs={
@@ -148,7 +142,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					tooltip: 'Measures the percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
 					color: '#BF38FF',
 					gradient: 'magnetos',
-					value: round(getLastValue(chunk_retrieval_rate_24h)),
+					value: round(chunk_retrieval_rate_24h.values[chunk_retrieval_rate_24h.values.length - 1]?.[1] ?? 0),
 				},
 				{
 					id: 'file_retrieval_rate_24',
@@ -156,7 +150,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					tooltip: 'Evaluates the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
 					color: '#8D46FF',
 					gradient: 'candy-grape-fizz',
-					value: round(getLastValue(file_retrieval_rate_24h)),
+					value: round(file_retrieval_rate_24h.values[file_retrieval_rate_24h.values.length - 1]?.[1] ?? 0),
 				},
 			]}
 			graphs={
@@ -191,7 +185,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					color: '#45E5E7',
 					gradient: 'near-moon',
 					unit: 'ms',
-					value: round(getLastValue(chunk_retrieval_duration_24h)),
+					value: round(chunk_retrieval_duration_24h.values[chunk_retrieval_duration_24h.values.length - 1]?.[1] ?? 0),
 				},
 				{
 					id: 'chunk_retrieval_duration_all',
@@ -201,7 +195,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					color: '#45E5E7',
 					gradient: 'near-moon',
 					unit: 'ms',
-					value: round(getLastValue(chunk_retrieval_duration_all_time)),
+					value: round(chunk_retrieval_duration_all_time.values[chunk_retrieval_duration_all_time.values.length - 1]?.[1] ?? 0),
 				},
 				{
 					id: "file_download_speed_24",
@@ -211,7 +205,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					unit: 'MiB/s',
 					color: '#5AD2FE',
 					gradient: 'thors-thunder',
-					value: round(getLastValue(file_download_speed_24h)),
+					value: round(file_download_speed_24h.values[file_download_speed_24h.values.length - 1]?.[1] ?? 0),
 				},
 				{
 					id: "file_download_speed_all",
@@ -221,7 +215,7 @@ function getLastValue(dataSeries: DataSeries): number {
 					color: '#5AD2FE',
 					gradient: 'thors-thunder',
 					unit: 'MiB/s',
-					value: round(getLastValue(file_download_speed_all_time), 2),
+					value: round(file_download_speed_all_time.values[file_download_speed_all_time.values.length - 1]?.[1] ?? 0, 2),
 				}
 			]}
 			graphs={
