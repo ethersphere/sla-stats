@@ -84,7 +84,6 @@ function round(value: number, decimals = 2): number {
 					tooltip: 'Percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
 					color: '#00CA8E',
 					gradient: '00CA8E',
-                    {/* FIX: Inlined the data query logic, safely */}
 					value: round(download_success_24h.values[download_success_24h.values.length - 1]?.[1] ?? 0),
 				},
 				{
