@@ -3,10 +3,28 @@ import '../styles/base.css';
 import Layout from '../layouts/Layout.astro';
 import Block from '../components/Block.astro';
 
-// --- FIX: Robust data fetching with default values ---
-// This new block safely fetches the data. If the API fails, it provides
-// empty default values so the rest of the page doesn't crash.
-let apiData = {};
+// --- FIX: Define the "shape" of our data for TypeScript ---
+interface DataSeries {
+	values: [number, number][];
+}
+
+interface ApiData {
+	chunk_retrieval_duration_all_time: DataSeries;
+	file_download_speed_24h: DataSeries;
+	upload_success_24h: DataSeries;
+	download_success_24h: DataSeries;
+	upload_success_all_time: DataSeries;
+	chunk_retrieval_rate_24h: DataSeries;
+	chunk_retrieval_duration_24h: DataSeries;
+	download_success_all_time: DataSeries;
+	file_retrieval_rate_24h: DataSeries;
+	file_download_speed_all_time: DataSeries;
+}
+// --- End of type definitions ---
+
+
+// This now uses the types we defined above.
+let apiData: Partial<ApiData> = {};
 try {
 	const response = await fetch('https://sla.ethswarm.org/api/v1/all');
 	if (response.ok) {
@@ -30,21 +48,17 @@ const {
 	file_retrieval_rate_24h = { values: [] },
 	file_download_speed_all_time = { values: [] }
 } = apiData;
-// --- End of fetching fix ---
 
-function round(value, decimals = 2) {
-    // FIX: Ensure value is a number before rounding to prevent errors
-	if (typeof value !== 'number') return 0;
+
+// FIX: Add types to function parameters
+function round(value: number, decimals = 2): number {
 	return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
-// --- FIX: A helper function to safely get the last value from a data series ---
-// This uses optional chaining (?.) and nullish coalescing (??) to prevent crashes.
-function getLastValue(dataSeries) {
-    if (!dataSeries || !Array.isArray(dataSeries.values)) return 0;
+// FIX: Add types to function parameters
+function getLastValue(dataSeries: DataSeries): number {
+	if (!dataSeries || !Array.isArray(dataSeries.values)) return 0;
     const lastEntry = dataSeries.values[dataSeries.values.length - 1];
-    // lastEntry?.[1] safely gets the second item, or returns undefined if lastEntry is missing.
-    // ?? 0 provides a default value of 0 if the result is undefined.
     return lastEntry?.[1] ?? 0;
 }
 ---
@@ -134,7 +148,7 @@ function getLastValue(dataSeries) {
 					tooltip: 'Measures the percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
 					color: '#BF38FF',
 					gradient: 'magnetos',
-					value: round(getLastValue(chunk_retrieval_rate_24h)), // <-- WAS CRASHING HERE
+					value: round(getLastValue(chunk_retrieval_rate_24h)),
 				},
 				{
 					id: 'file_retrieval_rate_24',
@@ -142,7 +156,7 @@ function getLastValue(dataSeries) {
 					tooltip: 'Evaluates the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
 					color: '#8D46FF',
 					gradient: 'candy-grape-fizz',
-					value: round(getLastValue(file_retrieval_rate_24h)), // <-- WAS CRASHING HERE
+					value: round(getLastValue(file_retrieval_rate_24h)),
 				},
 			]}
 			graphs={
