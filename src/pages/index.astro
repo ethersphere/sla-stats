@@ -3,23 +3,96 @@ import '../styles/base.css';
 import Layout from '../layouts/Layout.astro';
 import Block from '../components/Block.astro';
 
-// await fetch data from https://sla.ethswarm.org/api/v1/all
-// and pass it as a prop to the Layout component
-const { chunk_retrieval_duration_all_time,
-		file_download_speed_24h,
-		upload_success_24h,
-		download_success_24h,
-		upload_success_all_time,
-		chunk_retrieval_rate_24h,
-		chunk_retrieval_duration_24h,
-		download_success_all_time,
-		file_retrieval_rate_24h,
-		file_download_speed_all_time
-	} = await fetch('https://sla.ethswarm.org/api/v1/all').then((res) => res.json());
+// Fetch data from the API
+const { 
+    chunk_retrieval_duration_all_time,
+    file_download_speed_24h,
+    upload_success_24h,
+    download_success_24h,
+    upload_success_all_time,
+    chunk_retrieval_rate_24h,
+    chunk_retrieval_duration_24h,
+    download_success_all_time,
+    file_retrieval_rate_24h,
+    file_download_speed_all_time
+} = await fetch('https://sla.ethswarm.org/api/v1/all').then((res) => res.json());
+
+// --- Helper Functions ---
 
 function round(value: number, decimals = 2) {
-	return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+    return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
+
+/**
+ * Helper function to get the ISO week number for a date.
+ * @param {Date} d - The date object.
+ * @returns {number} The ISO week number.
+ */
+function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return weekNo;
+}
+
+/**
+ * Aggregates daily time-series data into weekly averages.
+ * This version groups data by calendar week for better accuracy and cleaner graphs.
+ * @param {Array<[string, number]>} dailyData - Array of [timestamp, value] pairs.
+ * @returns {Array<[string, number]>} - A new array with weekly averaged data.
+ */
+function aggregateDataByWeek(dailyData) {
+    if (!dailyData || dailyData.length === 0) {
+        return [];
+    }
+
+    const weeklyData = {}; // Use an object to group data by week, e.g., '2025-34'
+
+    // Group values by week
+    dailyData.forEach(([timestamp, value]) => {
+        const date = new Date(timestamp);
+        const year = date.getUTCFullYear();
+        const week = getWeekNumber(date);
+        const key = `${year}-${week}`;
+
+        if (!weeklyData[key]) {
+            weeklyData[key] = {
+                values: [],
+                lastTimestamp: timestamp // Keep track of the last timestamp in the week
+            };
+        }
+        weeklyData[key].values.push(value);
+        // Ensure the last timestamp for the week is always the latest one
+        if (new Date(timestamp).getTime() > new Date(weeklyData[key].lastTimestamp).getTime()) {
+            weeklyData[key].lastTimestamp = timestamp;
+        }
+    });
+
+    // Calculate the average for each week
+    const weeklyAverages = Object.keys(weeklyData).map(key => {
+        const week = weeklyData[key];
+        const sum = week.values.reduce((acc, val) => acc + val, 0);
+        const average = sum / week.values.length;
+        // Use the last timestamp of the week for the data point's x-axis value
+        return [week.lastTimestamp, average];
+    });
+
+    // Sort the final result by date to ensure the graph is drawn correctly
+    return weeklyAverages.sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+}
+
+
+// Prepare data for the graphs, showing a 180-day trend with weekly averages
+const graphLookbackDays = 180;
+
+const downloadSuccess24hGraph = aggregateDataByWeek(download_success_24h.values.slice(-graphLookbackDays));
+const uploadSuccess24hGraph = aggregateDataByWeek(upload_success_24h.values.slice(-graphLookbackDays));
+const chunkRetrievalRate24hGraph = aggregateDataByWeek(chunk_retrieval_rate_24h.values.slice(-graphLookbackDays));
+const fileRetrievalRate24hGraph = aggregateDataByWeek(file_retrieval_rate_24h.values.slice(-graphLookbackDays));
+const chunkRetrievalDuration24hGraph = aggregateDataByWeek(chunk_retrieval_duration_24h.values.slice(-graphLookbackDays));
+const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.values.slice(-graphLookbackDays));
 
 ---
 
@@ -82,17 +155,17 @@ function round(value: number, decimals = 2) {
 				[
 					{
 						id: 'download_success_24h',
-						title: 'Daily Neighborhood Download Availability Rate (Percent / Day)',
+						title: 'Historical Trend: Download Availability (Weekly Avg. of 24h Rate)',
 						type: 'bar',
-						tooltip: 'Time series graph of the percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
-						data: download_success_24h.values.slice(download_success_24h.values.length - Math.min(30, download_success_24h.values.length), download_success_24h.values.length),
+						tooltip: 'Historical trend showing the weekly average of the daily (24h) download success rate. Each point represents the average of all daily values within that calendar week.',
+						data: downloadSuccess24hGraph,
 					},
 					{
 						id: 'upload_success_24h',
-						title: 'Daily Neighborhood Upload Availability Rate (Percent / Day)',
+						title: 'Historical Trend: Upload Availability (Weekly Avg. of 24h Rate)',
 						type: 'bar',
-						tooltip: 'Time series graph of the percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
-						data: upload_success_24h.values.slice(upload_success_24h.values.length - Math.min(30, upload_success_24h.values.length), upload_success_24h.values.length),
+						tooltip: 'Historical trend showing the weekly average of the daily (24h) upload success rate. Each point represents the average of all daily values within that calendar week.',
+						data: uploadSuccess24hGraph,
 					}
 				]
 			}
@@ -108,7 +181,6 @@ function round(value: number, decimals = 2) {
 					tooltip: 'Measures the percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
 					color: '#BF38FF',
 					gradient: 'magnetos',
-                    // --- MINIMAL FIX 1 ---
 					value: chunk_retrieval_rate_24h.values.length > 0 ? round(chunk_retrieval_rate_24h.values[chunk_retrieval_rate_24h.values.length - 1][1]) : 0,
 				},
 				{
@@ -117,7 +189,6 @@ function round(value: number, decimals = 2) {
 					tooltip: 'Evaluates the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
 					color: '#8D46FF',
 					gradient: 'candy-grape-fizz',
-                    // --- MINIMAL FIX 2 ---
 					value: file_retrieval_rate_24h.values.length > 0 ? round(file_retrieval_rate_24h.values[file_retrieval_rate_24h.values.length - 1][1]) : 0,
 				},
 			]}
@@ -125,17 +196,17 @@ function round(value: number, decimals = 2) {
 				[
 					{
 						id: 'chunk_retrieval_rate_24h',
-						title: 'Daily Chunk Retrieval Success Rate (Percent / Day)',
+						title: 'Historical Trend: Chunk Retrieval (Weekly Avg. of 24h Rate)',
 						type: 'line',
-						tooltip: 'Time series graph of percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
-						data: chunk_retrieval_rate_24h.values.slice(chunk_retrieval_rate_24h.values.length - Math.min(30, chunk_retrieval_rate_24h.values.length), chunk_retrieval_rate_24h.values.length),
+						tooltip: 'Historical trend showing the weekly average of the daily (24h) chunk retrieval success rate. Each point represents the average of all daily values within that calendar week.',
+						data: chunkRetrievalRate24hGraph,
 					},
 					{
 						id: 'file_retrieval_rate_24h',
-						title: 'Daily Large File Retrieval Success Rate (Percent / Day)',
+						title: 'Historical Trend: File Retrieval (Weekly Avg. of 24h Rate)',
 						type: 'line',
-						tooltip: 'Time series graph of the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
-						data: file_retrieval_rate_24h.values.slice(file_retrieval_rate_24h.values.length - Math.min(30, file_retrieval_rate_24h.values.length), file_retrieval_rate_24h.values.length),
+						tooltip: 'Historical trend showing the weekly average of the daily (24h) large file retrieval success rate. Each point represents the average of all daily values within that calendar week.',
+						data: fileRetrievalRate24hGraph,
 					}
 				]
 			}
@@ -190,17 +261,17 @@ function round(value: number, decimals = 2) {
 				[
 					{
 						id: 'chunk_retrieval_duration_24h',
-						title: 'Daily Average Chunk Retrieval Time (Milliseconds / Day)',
+						title: 'Historical Trend: Chunk Retrieval Time (Weekly Avg. of 24h Time)',
 						type: 'bar',
-						tooltip: 'Time series graph of the average time taken to retrieve a chunk in the last 24 hours, in milliseconds, calculated from the sum of all retrieval times and counts.',
-						data: chunk_retrieval_duration_24h.values.slice(chunk_retrieval_duration_24h.values.length - Math.min(30, chunk_retrieval_duration_24h.values.length), chunk_retrieval_duration_24h.values.length),
+						tooltip: 'Historical trend showing the weekly average of the daily (24h) chunk retrieval time. Each point represents the average of all daily values within that calendar week.',
+						data: chunkRetrievalDuration24hGraph,
 					},
 					{
 						id: 'file_download_speed_24h',
-						title: 'Daily Average File Download Speed (MiBps / Day)',
+						title: 'Historical Trend: File Download Speed (Weekly Avg. of 24h Speed)',
 						type: 'bar',
-						tooltip: 'Time series graph if the average download speed for large files in the last 24 hours, in Mebibytes per second (MiB/s), based on file sizes and download durations.',
-						data: file_download_speed_24h.values.slice(file_download_speed_24h.values.length - Math.min(30, file_download_speed_24h.values.length), file_download_speed_24h.values.length),
+						tooltip: 'Historical trend showing the weekly average of the daily (24h) file download speed. Each point represents the average of all daily values within that calendar week.',
+						data: fileDownloadSpeed24hGraph,
 					}
 				]
 			}
