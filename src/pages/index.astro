@@ -3,6 +3,16 @@ import '../styles/base.css';
 import Layout from '../layouts/Layout.astro';
 import Block from '../components/Block.astro';
 
+// --- Type Definitions for Clarity and Safety ---
+type DataPoint = [string, number];
+
+interface WeeklyDataAccumulator {
+  [key: string]: {
+    values: number[];
+    lastTimestamp: string;
+  };
+}
+
 // Fetch data from the API
 const { 
     chunk_retrieval_duration_all_time,
@@ -17,19 +27,17 @@ const {
     file_download_speed_all_time
 } = await fetch('https://sla.ethswarm.org/api/v1/all').then((res) => res.json());
 
-// --- Helper Functions ---
+// --- Helper Functions with Explicit Types ---
 
-function round(value: number, decimals = 2) {
+function round(value: number, decimals = 2): number {
     if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
     return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
 /**
  * Helper function to get the ISO week number for a date.
- * @param {Date} d - The date object.
- * @returns {number} The ISO week number.
  */
-function getWeekNumber(d) {
+function getWeekNumber(d: Date): number {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
@@ -39,19 +47,15 @@ function getWeekNumber(d) {
 
 /**
  * Aggregates daily time-series data into weekly averages.
- * This version groups data by calendar week for better accuracy and cleaner graphs.
- * @param {Array<[string, number]>} dailyData - Array of [timestamp, value] pairs.
- * @returns {Array<[string, number]>} - A new array with weekly averaged data.
  */
-function aggregateDataByWeek(dailyData) {
+function aggregateDataByWeek(dailyData: DataPoint[]): DataPoint[] {
     if (!dailyData || dailyData.length === 0) {
         return [];
     }
 
-    const weeklyData = {}; // Use an object to group data by week, e.g., '2025-34'
+    const weeklyData: WeeklyDataAccumulator = {};
 
-    // Group values by week
-    dailyData.forEach(([timestamp, value]) => {
+    dailyData.forEach(([timestamp, value]: DataPoint) => {
         const date = new Date(timestamp);
         const year = date.getUTCFullYear();
         const week = getWeekNumber(date);
@@ -60,26 +64,22 @@ function aggregateDataByWeek(dailyData) {
         if (!weeklyData[key]) {
             weeklyData[key] = {
                 values: [],
-                lastTimestamp: timestamp // Keep track of the last timestamp in the week
+                lastTimestamp: timestamp
             };
         }
         weeklyData[key].values.push(value);
-        // Ensure the last timestamp for the week is always the latest one
         if (new Date(timestamp).getTime() > new Date(weeklyData[key].lastTimestamp).getTime()) {
             weeklyData[key].lastTimestamp = timestamp;
         }
     });
 
-    // Calculate the average for each week
     const weeklyAverages = Object.keys(weeklyData).map(key => {
         const week = weeklyData[key];
-        const sum = week.values.reduce((acc, val) => acc + val, 0);
+        const sum = week.values.reduce((acc: number, val: number) => acc + val, 0);
         const average = sum / week.values.length;
-        // Use the last timestamp of the week for the data point's x-axis value
-        return [week.lastTimestamp, average];
+        return [week.lastTimestamp, average] as DataPoint;
     });
 
-    // Sort the final result by date to ensure the graph is drawn correctly
     return weeklyAverages.sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
 }
 
