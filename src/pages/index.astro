@@ -9,7 +9,7 @@ type DataPoint = [string, number];
 interface WeeklyDataAccumulator {
   [key: string]: {
     values: number[];
-    lastTimestamp: string;
+    firstTimestamp: string;
   };
 }
 
@@ -64,20 +64,19 @@ function aggregateDataByWeek(dailyData: DataPoint[]): DataPoint[] {
         if (!weeklyData[key]) {
             weeklyData[key] = {
                 values: [],
-                lastTimestamp: timestamp
+                // Store the first timestamp we encounter for this week and never update it.
+                firstTimestamp: timestamp
             };
         }
         weeklyData[key].values.push(value);
-        if (new Date(timestamp).getTime() > new Date(weeklyData[key].lastTimestamp).getTime()) {
-            weeklyData[key].lastTimestamp = timestamp;
-        }
     });
 
     const weeklyAverages = Object.keys(weeklyData).map(key => {
         const week = weeklyData[key];
         const sum = week.values.reduce((acc: number, val: number) => acc + val, 0);
         const average = sum / week.values.length;
-        return [week.lastTimestamp, average] as DataPoint;
+        // Use the first timestamp for the x-axis value.
+        return [week.firstTimestamp, average] as DataPoint;
     });
 
     return weeklyAverages.sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
@@ -86,7 +85,6 @@ function aggregateDataByWeek(dailyData: DataPoint[]): DataPoint[] {
 
 // Prepare data for the graphs, showing a 180-day trend with weekly averages
 const graphLookbackDays = 180;
-
 const downloadSuccess24hGraph = aggregateDataByWeek(download_success_24h.values.slice(-graphLookbackDays));
 const uploadSuccess24hGraph = aggregateDataByWeek(upload_success_24h.values.slice(-graphLookbackDays));
 const chunkRetrievalRate24hGraph = aggregateDataByWeek(chunk_retrieval_rate_24h.values.slice(-graphLookbackDays));
@@ -116,7 +114,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 		<div class="px-5 sm:px-[60px] pt-10 pb-16 sm:pt-20 sm:pb-28 rounded-lg border border-[#2D3843] bg-[#1F2831]/70 space-y-20 sm:space-y-36">
 		<Block
 			title="Network Availability"
-			description={`Network reliability as measured by upload and download success rates accross all <a href="https://docs.ethswarm.org/docs/concepts/DISC/neighborhoods" target="_blank">neighborhoods</a> without respect to long-term retrievability.`}
+			description={`Network reliability as measured by upload and download success rates accross all <a 
+			href="https://docs.ethswarm.org/docs/concepts/DISC/neighborhoods" target="_blank">neighborhoods</a> without respect to long-term retrievability.`}
 			cards={[
 				{
 					id: 'download_success_24',
@@ -124,7 +123,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 					tooltip: 'Percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
 					color: '#00CA8E',
 					gradient: '00CA8E',
-					value: download_success_24h.values.length > 0 ? round(download_success_24h.values[download_success_24h.values.length - 1][1]) : 0,
+					value: download_success_24h.values.length > 0 ?
+round(download_success_24h.values[download_success_24h.values.length - 1][1]) : 0,
 				},
 				{
 					id: 'download_success_all',
@@ -132,7 +132,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 					tooltip: 'Overall percentage of successful downloads across all neighborhoods since the start of data tracking, computed over the entire data history.',
 					color: '#00CA8E',
 					gradient: 'green',
-					value: download_success_all_time.values.length > 0 ? round(download_success_all_time.values[download_success_all_time.values.length - 1][1]) : 0,
+					value: download_success_all_time.values.length > 0 ?
+round(download_success_all_time.values[download_success_all_time.values.length - 1][1]) : 0,
 				},
 				{
 					id: 'upload_success_24',
@@ -140,7 +141,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 					tooltip: 'Percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
 					color: '#4971FF',
 					gradient: 'blue',
-					value: upload_success_24h.values.length > 0 ? round(upload_success_24h.values[upload_success_24h.values.length - 1][1]) : 0,
+					value: upload_success_24h.values.length > 0 ?
+round(upload_success_24h.values[upload_success_24h.values.length - 1][1]) : 0,
 				},
 				{
 					id: 'upload_success_all',
@@ -148,7 +150,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 					tooltip: 'Cumulative percentage of successful uploads across all neighborhoods since data collection began, calculated over the entire period.',
 					color: '#4971FF',
 					gradient: 'blue',
-					value: upload_success_all_time.values.length > 0 ? round(upload_success_all_time.values[upload_success_all_time.values.length - 1][1], 2) : 0,
+					value: upload_success_all_time.values.length > 0 ?
+round(upload_success_all_time.values[upload_success_all_time.values.length - 1][1], 2) : 0,
 				}
 			]}
 			graphs={
@@ -181,7 +184,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 					tooltip: 'Measures the percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
 					color: '#BF38FF',
 					gradient: 'magnetos',
-					value: chunk_retrieval_rate_24h.values.length > 0 ? round(chunk_retrieval_rate_24h.values[chunk_retrieval_rate_24h.values.length - 1][1]) : 0,
+					value: chunk_retrieval_rate_24h.values.length > 0 ?
+round(chunk_retrieval_rate_24h.values[chunk_retrieval_rate_24h.values.length - 1][1]) : 0,
 				},
 				{
 					id: 'file_retrieval_rate_24',
@@ -189,7 +193,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 					tooltip: 'Evaluates the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
 					color: '#8D46FF',
 					gradient: 'candy-grape-fizz',
-					value: file_retrieval_rate_24h.values.length > 0 ? round(file_retrieval_rate_24h.values[file_retrieval_rate_24h.values.length - 1][1]) : 0,
+					value: file_retrieval_rate_24h.values.length > 0 ?
+round(file_retrieval_rate_24h.values[file_retrieval_rate_24h.values.length - 1][1]) : 0,
 				},
 			]}
 			graphs={
@@ -233,7 +238,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 					tooltip: 'Displays the long-term average time for chunk retrieval, in milliseconds, taking into account the entire period of data collection.',
 					color: '#45E5E7',
 					gradient: 'near-moon',
-					unit: 'ms',
+					unit: 
+'ms',
 					value: chunk_retrieval_duration_all_time.values.length > 0 ? round(chunk_retrieval_duration_all_time.values[chunk_retrieval_duration_all_time.values.length - 1][1]) : 0,
 				},
 				{
@@ -254,7 +260,8 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 					color: '#5AD2FE',
 					gradient: 'thors-thunder',
 					unit: 'MiB/s',
-					value: file_download_speed_all_time.values.length > 0 ? round(file_download_speed_all_time.values[file_download_speed_all_time.values.length - 1][1], 2) : 0,
+					value: file_download_speed_all_time.values.length > 0 ?
+round(file_download_speed_all_time.values[file_download_speed_all_time.values.length - 1][1], 2) : 0,
 				}
 			]}
 			graphs={
