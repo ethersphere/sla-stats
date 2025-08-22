@@ -159,7 +159,6 @@ const { title, description, cards, graphs } = Astro.props;
         Chart.defaults.color = '#737980';
         Chart.defaults.font.family = 'Inter';
 
-        // --- THE FIX IS HERE: Added explicit types to the function parameters ---
         const baseOptions = ({
             labels,
             data,
@@ -169,7 +168,7 @@ const { title, description, cards, graphs } = Astro.props;
             min,
             max,
             gridColor
-        }: ChartOptions) => { // Use the interface here
+        }: ChartOptions) => {
             return {
             type: 'line',
             data: {
@@ -229,9 +228,8 @@ const { title, description, cards, graphs } = Astro.props;
 
         for (const element of elements) {
             const ctx = element.getContext("2d");
-            // --- THE FIX IS HERE: Check if ctx is null before using it ---
             if (!ctx) {
-                continue; // Skip this canvas if context is not available
+                continue;
             }
             const data = JSON.parse(element.dataset.data ?? '[]')
 
@@ -275,7 +273,7 @@ const { title, description, cards, graphs } = Astro.props;
             }
 
             if (element.id === "file_retrieval_rate_24h") {
-                 options.options.scales.y.min = 0;
+                options.options.scales.y.min = 0;
                 options.options.scales.y.max = 100;
                 options.data.datasets[0].backgroundColor = gradientCandyGrapeFizz;
             }
