@@ -160,68 +160,27 @@ const { title, description, cards, graphs } = Astro.props;
         Chart.defaults.font.family = 'Inter';
 
         const baseOptions = ({
-            labels,
-            data,
-            backgroundColor,
-            pointBorderColor,
-            pointBackgroundColor,
-            min,
-            max,
-            gridColor
+            labels, data, backgroundColor, pointBorderColor, pointBackgroundColor, min, max, gridColor
         }: ChartOptions) => {
             return {
             type: 'line',
             data: {
                 labels,
-                datasets: [
-                {
-                    tension: 0.25,
-                    label: '',
-                    fill: true,
-                    data,
-                    pointBorderColor,
-                    pointBackgroundColor,
-                    backgroundColor,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
+                datasets: [ { tension: 0.25, label: '', fill: true, data, pointBorderColor, pointBackgroundColor, backgroundColor, pointRadius: 4, pointHoverRadius: 6 }]
             },
             options: {
                 clip: false,
                 scales: {
-                    y: {
-                        min,
-                        max,
-                        border: {
-                            display: false,
-                        },
-                        grid: {
-                            color: gridColor,
-                            drawTicks: true,
-                        },
-                    },
+                    y: { min, max, border: { display: false }, grid: { color: gridColor, drawTicks: true } },
                     x: {
-                        type: 'time',
-                        time: {
-                            unit: 'week',
-                            tooltipFormat: 'MMM d, yyyy'
-                        },
-                        grid: {
-                           display: false
-                        },
-                        ticks: {
-                           display: false
-                        }
+                        type: 'time', // CRITICAL FIX
+                        time: { unit: 'week', tooltipFormat: 'MMM d, yyyy' },
+                        grid: { display: false },
+                        ticks: { display: false }
                     }
                 },
-                interaction: {
-                    intersect: false,
-                },
-                plugins: {
-                    legend: {
-                        display: false,
-                    }
-                }
+                interaction: { intersect: false, },
+                plugins: { legend: { display: false } }
             }
         }
         }
@@ -257,16 +216,16 @@ const { title, description, cards, graphs } = Astro.props;
             gradientThorsThunder.addColorStop(0, 'rgba(110,200,250,1)');
             gradientThorsThunder.addColorStop(1, 'rgba(110,200,250,0)');
 
-            let options = baseOptions({
+           let options = baseOptions({
                 labels: data.map((row: [string, number]) => row[0]),
                 data: data.map((row: [string, number]) => row[1]),
-                backgroundColor: gradientGreen,
+                backgroundColor: gradientGreen, // Default gradient
                 pointBorderColor: '#7A8E8F',
                 pointBackgroundColor: '#2D3843',
                 min: 75,
                 max: 100,
                 gridColor: '#37434F'
-            });
+	   });
 
             if (element.id === "upload_success_24h") {
                 options.data.datasets[0].backgroundColor = gradientBlue;

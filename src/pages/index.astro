@@ -35,6 +35,10 @@ function getWeekNumber(d: Date): number {
     return weekNo;
 }
 
+/**
+ * Aggregates daily time-series data into weekly averages.
+ * FIXED: Uses the first timestamp of the week for plotting.
+ */
 function aggregateDataByWeek(dailyData: DataPoint[]): DataPoint[] {
     if (!dailyData || dailyData.length === 0) {
         return [];
@@ -62,7 +66,7 @@ function aggregateDataByWeek(dailyData: DataPoint[]): DataPoint[] {
     return weeklyAverages.sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
 }
 
-// ** THE FIX IS HERE: Safely access data using optional chaining (?.) and the nullish coalescing operator (??) **
+// Safely access data using optional chaining (?.) and the nullish coalescing operator (??)
 const safeGetValues = (metric: ApiMetric | undefined) => metric?.values ?? [];
 
 const graphLookbackDays = 180;
