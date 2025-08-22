@@ -141,8 +141,8 @@ const { title, description, cards, graphs } = Astro.props;
         });
     }
 
+    // --- Chart Rendering Logic (Corrected) ---
     (async function() {
-
         const elements = document.querySelectorAll('canvas');
         Chart.defaults.color = '#737980';
         Chart.defaults.font.family = 'Inter';
@@ -156,55 +156,58 @@ const { title, description, cards, graphs } = Astro.props;
             min,
             max,
             gridColor
-        }: any) => {
+        }) => {
             return {
-            type: 'line',
-             data: {
-                labels,
-                datasets: [
-                {
-                    tension: 0.25,
-                    label: '',
-                    fillColor: backgroundColor,
-                    fill: true,
-                    data,
-                    pointBorderColor,
-                    pointBackgroundColor,
-                    backgroundColor,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                // responsive: true,
-                // maintainAspectRatio: false,
-                clip: false,
-                scales: {
-                    y: {
-                        min,
-                        max,
-                        border: {
-                            display: false,
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        tension: 0.25,
+                        label: '',
+                        fill: true,
+                        data,
+                        pointBorderColor,
+                        pointBackgroundColor,
+                        backgroundColor,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    clip: false,
+                    scales: {
+                        y: {
+                            min,
+                            max,
+                            border: { display: false },
+                            grid: { color: gridColor, drawTicks: true },
                         },
-                        grid: {
-                            color: gridColor,
-                            drawTicks: true,
-                        },
+                        // --- THIS IS THE FIX ---
+                        x: {
+                            type: 'time', // Treat the x-axis as a time series
+                            time: {
+                                unit: 'week', // Display data by week
+                                tooltipFormat: 'MMM d, yyyy' // Format tooltip dates
+                            },
+                            grid: {
+                                display: false // Hide vertical grid lines
+                            },
+                            ticks: {
+                                display: false // Hide x-axis labels
+                            }
+                        }
+                        // --- END OF FIX ---
                     },
-                    x: {
-                        display: false,
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                },
-                plugins: {
-                    legend: {
-                        display: false,
+                    interaction: {
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: false,
+                        }
                     }
                 }
             }
-        }
         }
 
         for (const element of elements) {
