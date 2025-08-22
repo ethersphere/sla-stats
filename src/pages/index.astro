@@ -6,6 +6,10 @@ import Block from '../components/Block.astro';
 // --- Type Definitions for Clarity and Safety ---
 type DataPoint = [string, number];
 
+interface ApiMetric {
+    values: DataPoint[];
+}
+
 interface WeeklyDataAccumulator {
   [key: string]: {
     values: number[];
@@ -14,18 +18,7 @@ interface WeeklyDataAccumulator {
 }
 
 // Fetch data from the API
-const { 
-    chunk_retrieval_duration_all_time,
-    file_download_speed_24h,
-    upload_success_24h,
-    download_success_24h,
-    upload_success_all_time,
-    chunk_retrieval_rate_24h,
-    chunk_retrieval_duration_24h,
-    download_success_all_time,
-    file_retrieval_rate_24h,
-    file_download_speed_all_time
-} = await fetch('https://sla.ethswarm.org/api/v1/all').then((res) => res.json());
+const apiData = await fetch('https://sla.ethswarm.org/api/v1/all').then((res) => res.json());
 
 // --- Helper Functions with Explicit Types ---
 
@@ -34,9 +27,6 @@ function round(value: number, decimals = 2): number {
     return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
-/**
- * Helper function to get the ISO week number for a date.
- */
 function getWeekNumber(d: Date): number {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -45,62 +35,60 @@ function getWeekNumber(d: Date): number {
     return weekNo;
 }
 
-/**
- * Aggregates daily time-series data into weekly averages.
- */
 function aggregateDataByWeek(dailyData: DataPoint[]): DataPoint[] {
     if (!dailyData || dailyData.length === 0) {
         return [];
     }
-
     const weeklyData: WeeklyDataAccumulator = {};
-
     dailyData.forEach(([timestamp, value]: DataPoint) => {
         const date = new Date(timestamp);
         const year = date.getUTCFullYear();
         const week = getWeekNumber(date);
         const key = `${year}-${week}`;
-
         if (!weeklyData[key]) {
             weeklyData[key] = {
                 values: [],
-                // Store the first timestamp we encounter for this week and never update it.
                 firstTimestamp: timestamp
             };
         }
         weeklyData[key].values.push(value);
     });
-
     const weeklyAverages = Object.keys(weeklyData).map(key => {
         const week = weeklyData[key];
         const sum = week.values.reduce((acc: number, val: number) => acc + val, 0);
         const average = sum / week.values.length;
-        // Use the first timestamp for the x-axis value.
         return [week.firstTimestamp, average] as DataPoint;
     });
-
     return weeklyAverages.sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
 }
 
+// ** THE FIX IS HERE: Safely access data using optional chaining (?.) and the nullish coalescing operator (??) **
+const safeGetValues = (metric: ApiMetric | undefined) => metric?.values ?? [];
 
-// Prepare data for the graphs, showing a 180-day trend with weekly averages
 const graphLookbackDays = 180;
-const downloadSuccess24hGraph = aggregateDataByWeek(download_success_24h.values.slice(-graphLookbackDays));
-const uploadSuccess24hGraph = aggregateDataByWeek(upload_success_24h.values.slice(-graphLookbackDays));
-const chunkRetrievalRate24hGraph = aggregateDataByWeek(chunk_retrieval_rate_24h.values.slice(-graphLookbackDays));
-const fileRetrievalRate24hGraph = aggregateDataByWeek(file_retrieval_rate_24h.values.slice(-graphLookbackDays));
-const chunkRetrievalDuration24hGraph = aggregateDataByWeek(chunk_retrieval_duration_24h.values.slice(-graphLookbackDays));
-const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.values.slice(-graphLookbackDays));
+const download_success_24h_values = safeGetValues(apiData.download_success_24h);
+const upload_success_24h_values = safeGetValues(apiData.upload_success_24h);
+const chunk_retrieval_rate_24h_values = safeGetValues(apiData.chunk_retrieval_rate_24h);
+const file_retrieval_rate_24h_values = safeGetValues(apiData.file_retrieval_rate_24h);
+const chunk_retrieval_duration_24h_values = safeGetValues(apiData.chunk_retrieval_duration_24h);
+const file_download_speed_24h_values = safeGetValues(apiData.file_download_speed_24h);
+const download_success_all_time_values = safeGetValues(apiData.download_success_all_time);
+const upload_success_all_time_values = safeGetValues(apiData.upload_success_all_time);
+const chunk_retrieval_duration_all_time_values = safeGetValues(apiData.chunk_retrieval_duration_all_time);
+const file_download_speed_all_time_values = safeGetValues(apiData.file_download_speed_all_time);
 
+const downloadSuccess24hGraph = aggregateDataByWeek(download_success_24h_values.slice(-graphLookbackDays));
+const uploadSuccess24hGraph = aggregateDataByWeek(upload_success_24h_values.slice(-graphLookbackDays));
+const chunkRetrievalRate24hGraph = aggregateDataByWeek(chunk_retrieval_rate_24h_values.slice(-graphLookbackDays));
+const fileRetrievalRate24hGraph = aggregateDataByWeek(file_retrieval_rate_24h_values.slice(-graphLookbackDays));
+const chunkRetrievalDuration24hGraph = aggregateDataByWeek(chunk_retrieval_duration_24h_values.slice(-graphLookbackDays));
+const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h_values.slice(-graphLookbackDays));
 ---
 
 <Layout title="Swarm Dashboard">
 	<main class="pt-12 pb-24">
-
 		<div class="hidden text-[#00CA8E] text-[#4971FF] text-[#BF38FF] text-[#8D46FF] text-[#45E5E7] text-[#5AD2FE] from-[#5AD2FE] from-[#45E5E7] from-[#8D46FF] from-[#BF38FF]"></div>
-
 		<div class="flex justify-center"><img src="/swarm.png" alt="" class="h-8" /></div>
-
 		<div class="max-w-7xl mx-auto px-5 lg:px-8">
 			<div class="px-5 sm:px-[60px] my-[120px] sm:grid sm:grid-cols-2 lg:grid-cols-12 sm:gap-x-[22px] border border-transparent">
 				<h1 class="lg:col-span-7 text-[48px] font-bold tracking-[-0.48px]">Swarm Dashboard</h1>
@@ -109,181 +97,163 @@ const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h.va
 				</div>
 			</div>
 		</div>
-
 		<div class="max-w-7xl mx-auto px-5 lg:px-8">
-		<div class="px-5 sm:px-[60px] pt-10 pb-16 sm:pt-20 sm:pb-28 rounded-lg border border-[#2D3843] bg-[#1F2831]/70 space-y-20 sm:space-y-36">
-		<Block
-			title="Network Availability"
-			description={`Network reliability as measured by upload and download success rates accross all <a 
-			href="https://docs.ethswarm.org/docs/concepts/DISC/neighborhoods" target="_blank">neighborhoods</a> without respect to long-term retrievability.`}
-			cards={[
-				{
-					id: 'download_success_24',
-					title: '24 Hour Neighborhood Download Availability Rate',
-					tooltip: 'Percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
-					color: '#00CA8E',
-					gradient: '00CA8E',
-					value: download_success_24h.values.length > 0 ?
-round(download_success_24h.values[download_success_24h.values.length - 1][1]) : 0,
-				},
-				{
-					id: 'download_success_all',
-					title: 'All Time Neighborhood Download Availability Rate',
-					tooltip: 'Overall percentage of successful downloads across all neighborhoods since the start of data tracking, computed over the entire data history.',
-					color: '#00CA8E',
-					gradient: 'green',
-					value: download_success_all_time.values.length > 0 ?
-round(download_success_all_time.values[download_success_all_time.values.length - 1][1]) : 0,
-				},
-				{
-					id: 'upload_success_24',
-					title: '24 Hour Neighborhood Upload Availability Rate',
-					tooltip: 'Percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
-					color: '#4971FF',
-					gradient: 'blue',
-					value: upload_success_24h.values.length > 0 ?
-round(upload_success_24h.values[upload_success_24h.values.length - 1][1]) : 0,
-				},
-				{
-					id: 'upload_success_all',
-					title: 'All Time Neighborhood Upload Availability Rate',
-					tooltip: 'Cumulative percentage of successful uploads across all neighborhoods since data collection began, calculated over the entire period.',
-					color: '#4971FF',
-					gradient: 'blue',
-					value: upload_success_all_time.values.length > 0 ?
-round(upload_success_all_time.values[upload_success_all_time.values.length - 1][1], 2) : 0,
-				}
-			]}
-			graphs={
-				[
-					{
-						id: 'download_success_24h',
-						title: 'Historical Trend: Download Availability (Weekly Avg. of 24h Rate)',
-						type: 'bar',
-						tooltip: 'Historical trend showing the weekly average of the daily (24h) download success rate. Each point represents the average of all daily values within that calendar week.',
-						data: downloadSuccess24hGraph,
-					},
-					{
-						id: 'upload_success_24h',
-						title: 'Historical Trend: Upload Availability (Weekly Avg. of 24h Rate)',
-						type: 'bar',
-						tooltip: 'Historical trend showing the weekly average of the daily (24h) upload success rate. Each point represents the average of all daily values within that calendar week.',
-						data: uploadSuccess24hGraph,
-					}
-				]
-			}
-		/>
-
-		<Block
-			title="Data Durability"
-			description={`The retrievability of both chunks and large files over extended time periods.`}
-			cards={[
-				{
-					id: 'chunk_retrieval_rate_24',
-					title: '24 Hour Chunk Retrieval Success Rate',
-					tooltip: 'Measures the percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
-					color: '#BF38FF',
-					gradient: 'magnetos',
-					value: chunk_retrieval_rate_24h.values.length > 0 ?
-round(chunk_retrieval_rate_24h.values[chunk_retrieval_rate_24h.values.length - 1][1]) : 0,
-				},
-				{
-					id: 'file_retrieval_rate_24',
-					title: '24 Hour File Retrieval Success Rate',
-					tooltip: 'Evaluates the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
-					color: '#8D46FF',
-					gradient: 'candy-grape-fizz',
-					value: file_retrieval_rate_24h.values.length > 0 ?
-round(file_retrieval_rate_24h.values[file_retrieval_rate_24h.values.length - 1][1]) : 0,
-				},
-			]}
-			graphs={
-				[
-					{
-						id: 'chunk_retrieval_rate_24h',
-						title: 'Historical Trend: Chunk Retrieval (Weekly Avg. of 24h Rate)',
-						type: 'line',
-						tooltip: 'Historical trend showing the weekly average of the daily (24h) chunk retrieval success rate. Each point represents the average of all daily values within that calendar week.',
-						data: chunkRetrievalRate24hGraph,
-					},
-					{
-						id: 'file_retrieval_rate_24h',
-						title: 'Historical Trend: File Retrieval (Weekly Avg. of 24h Rate)',
-						type: 'line',
-						tooltip: 'Historical trend showing the weekly average of the daily (24h) large file retrieval success rate. Each point represents the average of all daily values within that calendar week.',
-						data: fileRetrievalRate24hGraph,
-					}
-				]
-			}
-		/>
-
-		<Block
-			title="Latency"
-			description={`Network response time and download speeds for both single chunks and large files.`}
-			cards={[
-				{
-					id: 'chunk_retrieval_duration_24',
-					type: "number",
-					title: '24 Hour Average Chunk Retrieval Time',
-					tooltip: 'Presents the average time taken to retrieve a chunk in the last 24 hours, in milliseconds, calculated from the sum of all retrieval times and counts.',
-					color: '#45E5E7',
-					gradient: 'near-moon',
-					unit: 'ms',
-					value: chunk_retrieval_duration_24h.values.length > 0 ?round(chunk_retrieval_duration_24h.values[chunk_retrieval_duration_24h.values.length - 1][1]) : 0,
-				},
-				{
-					id: 'chunk_retrieval_duration_all',
-					type: "number",
-					title: 'All Time Average Chunk Retrieval Time',
-					tooltip: 'Displays the long-term average time for chunk retrieval, in milliseconds, taking into account the entire period of data collection.',
-					color: '#45E5E7',
-					gradient: 'near-moon',
-					unit: 
-'ms',
-					value: chunk_retrieval_duration_all_time.values.length > 0 ? round(chunk_retrieval_duration_all_time.values[chunk_retrieval_duration_all_time.values.length - 1][1]) : 0,
-				},
-				{
-					id: "file_download_speed_24",
-					type: "number",
-					title: '24 Hour Average Download Speed of Large Files',
-					tooltip: 'Shows the average download speed for large files in the last 24 hours, in Mebibytes per second (MiB/s), based on file sizes and download durations.',
-					unit: 'MiB/s',
-					color: '#5AD2FE',
-					gradient: 'thors-thunder',
-					value: file_download_speed_24h.values.length > 0 ?round(file_download_speed_24h.values[file_download_speed_24h.values.length - 1][1]) : 0,
-				},
-				{
-					id: "file_download_speed_all",
-					type: "number",
-					title: 'All Time Average Download Speed of Large Files',
-					tooltip: 'Indicates the cumulative average download speed of large files, in MiB/s, calculated over the entire data collection period.',
-					color: '#5AD2FE',
-					gradient: 'thors-thunder',
-					unit: 'MiB/s',
-					value: file_download_speed_all_time.values.length > 0 ?
-round(file_download_speed_all_time.values[file_download_speed_all_time.values.length - 1][1], 2) : 0,
-				}
-			]}
-			graphs={
-				[
-					{
-						id: 'chunk_retrieval_duration_24h',
-						title: 'Historical Trend: Chunk Retrieval Time (Weekly Avg. of 24h Time)',
-						type: 'bar',
-						tooltip: 'Historical trend showing the weekly average of the daily (24h) chunk retrieval time. Each point represents the average of all daily values within that calendar week.',
-						data: chunkRetrievalDuration24hGraph,
-					},
-					{
-						id: 'file_download_speed_24h',
-						title: 'Historical Trend: File Download Speed (Weekly Avg. of 24h Speed)',
-						type: 'bar',
-						tooltip: 'Historical trend showing the weekly average of the daily (24h) file download speed. Each point represents the average of all daily values within that calendar week.',
-						data: fileDownloadSpeed24hGraph,
-					}
-				]
-			}
-		/>
-		</div>
+			<div class="px-5 sm:px-[60px] pt-10 pb-16 sm:pt-20 sm:pb-28 rounded-lg border border-[#2D3843] bg-[#1F2831]/70 space-y-20 sm:space-y-36">
+				<Block
+					title="Network Availability"
+					description={`Network reliability as measured by upload and download success rates accross all <a href="https://docs.ethswarm.org/docs/concepts/DISC/neighborhoods" target="_blank">neighborhoods</a> without respect to long-term retrievability.`}
+					cards={[
+						{
+							id: 'download_success_24',
+							title: '24 Hour Neighborhood Download Availability Rate',
+							tooltip: 'Percentage of successful downloads across all neighborhoods in the last 24 hours, calculated by subtracting download errors from total attempts and dividing by total attempts.',
+							color: '#00CA8E',
+							gradient: '00CA8E',
+							value: download_success_24h_values.length > 0 ? round(download_success_24h_values[download_success_24h_values.length - 1][1]) : 0,
+						},
+						{
+							id: 'download_success_all',
+							title: 'All Time Neighborhood Download Availability Rate',
+							tooltip: 'Overall percentage of successful downloads across all neighborhoods since the start of data tracking, computed over the entire data history.',
+							color: '#00CA8E',
+							gradient: 'green',
+							value: download_success_all_time_values.length > 0 ? round(download_success_all_time_values[download_success_all_time_values.length - 1][1]) : 0,
+						},
+						{
+							id: 'upload_success_24',
+							title: '24 Hour Neighborhood Upload Availability Rate',
+							tooltip: 'Percentage of successful uploads across all neighborhoods in the past 24 hours, determined by the difference between total upload attempts and upload errors, divided by total attempts.',
+							color: '#4971FF',
+							gradient: 'blue',
+							value: upload_success_24h_values.length > 0 ? round(upload_success_24h_values[upload_success_24h_values.length - 1][1]) : 0,
+						},
+						{
+							id: 'upload_success_all',
+							title: 'All Time Neighborhood Upload Availability Rate',
+							tooltip: 'Cumulative percentage of successful uploads across all neighborhoods since data collection began, calculated over the entire period.',
+							color: '#4971FF',
+							gradient: 'blue',
+							value: upload_success_all_time_values.length > 0 ? round(upload_success_all_time_values[upload_success_all_time_values.length - 1][1], 2) : 0,
+						}
+					]}
+					graphs={[
+						{
+							id: 'download_success_24h',
+							title: 'Historical Trend: Download Availability (Weekly Avg. of 24h Rate)',
+							type: 'bar',
+							tooltip: 'Historical trend showing the weekly average of the daily (24h) download success rate. Each point represents the average of all daily values within that calendar week.',
+							data: downloadSuccess24hGraph,
+						},
+						{
+							id: 'upload_success_24h',
+							title: 'Historical Trend: Upload Availability (Weekly Avg. of 24h Rate)',
+							type: 'bar',
+							tooltip: 'Historical trend showing the weekly average of the daily (24h) upload success rate. Each point represents the average of all daily values within that calendar week.',
+							data: uploadSuccess24hGraph,
+						}
+					]}
+				/>
+				<Block
+					title="Data Durability"
+					description={`The retrievability of both chunks and large files over extended time periods.`}
+					cards={[
+						{
+							id: 'chunk_retrieval_rate_24',
+							title: '24 Hour Chunk Retrieval Success Rate',
+							tooltip: 'Measures the percentage of chunks successfully retrieved over the entire data collection period, based on successful retrievals against total attempts.',
+							color: '#BF38FF',
+							gradient: 'magnetos',
+							value: chunk_retrieval_rate_24h_values.length > 0 ? round(chunk_retrieval_rate_24h_values[chunk_retrieval_rate_24h_values.length - 1][1]) : 0,
+						},
+						{
+							id: 'file_retrieval_rate_24',
+							title: '24 Hour File Retrieval Success Rate',
+							tooltip: 'Evaluates the success rate in retrieving large files across the network’s history, considering download attempts and failures.',
+							color: '#8D46FF',
+							gradient: 'candy-grape-fizz',
+							value: file_retrieval_rate_24h_values.length > 0 ? round(file_retrieval_rate_24h_values[file_retrieval_rate_24h_values.length - 1][1]) : 0,
+						},
+					]}
+					graphs={[
+						{
+							id: 'chunk_retrieval_rate_24h',
+							title: 'Historical Trend: Chunk Retrieval (Weekly Avg. of 24h Rate)',
+							type: 'line',
+							tooltip: 'Historical trend showing the weekly average of the daily (24h) chunk retrieval success rate. Each point represents the average of all daily values within that calendar week.',
+							data: chunkRetrievalRate24hGraph,
+						},
+						{
+							id: 'file_retrieval_rate_24h',
+							title: 'Historical Trend: File Retrieval (Weekly Avg. of 24h Rate)',
+							type: 'line',
+							tooltip: 'Historical trend showing the weekly average of the daily (24h) large file retrieval success rate. Each point represents the average of all daily values within that calendar week.',
+							data: fileRetrievalRate24hGraph,
+						}
+					]}
+				/>
+				<Block
+					title="Latency"
+					description={`Network response time and download speeds for both single chunks and large files.`}
+					cards={[
+						{
+							id: 'chunk_retrieval_duration_24',
+							type: "number",
+							title: '24 Hour Average Chunk Retrieval Time',
+							tooltip: 'Presents the average time taken to retrieve a chunk in the last 24 hours, in milliseconds, calculated from the sum of all retrieval times and counts.',
+							color: '#45E5E7',
+							gradient: 'near-moon',
+							unit: 'ms',
+							value: chunk_retrieval_duration_24h_values.length > 0 ? round(chunk_retrieval_duration_24h_values[chunk_retrieval_duration_24h_values.length - 1][1]) : 0,
+						},
+						{
+							id: 'chunk_retrieval_duration_all',
+							type: "number",
+							title: 'All Time Average Chunk Retrieval Time',
+							tooltip: 'Displays the long-term average time for chunk retrieval, in milliseconds, taking into account the entire period of data collection.',
+							color: '#45E5E7',
+							gradient: 'near-moon',
+							unit: 'ms',
+							value: chunk_retrieval_duration_all_time_values.length > 0 ? round(chunk_retrieval_duration_all_time_values[chunk_retrieval_duration_all_time_values.length - 1][1]) : 0,
+						},
+						{
+							id: "file_download_speed_24",
+							type: "number",
+							title: '24 Hour Average Download Speed of Large Files',
+							tooltip: 'Shows the average download speed for large files in the last 24 hours, in Mebibytes per second (MiB/s), based on file sizes and download durations.',
+							unit: 'MiB/s',
+							color: '#5AD2FE',
+							gradient: 'thors-thunder',
+							value: file_download_speed_24h_values.length > 0 ? round(file_download_speed_24h_values[file_download_speed_24h_values.length - 1][1]) : 0,
+						},
+						{
+							id: "file_download_speed_all",
+							type: "number",
+							title: 'All Time Average Download Speed of Large Files',
+							tooltip: 'Indicates the cumulative average download speed of large files, in MiB/s, calculated over the entire data collection period.',
+							color: '#5AD2FE',
+							gradient: 'thors-thunder',
+							unit: 'MiB/s',
+							value: file_download_speed_all_time_values.length > 0 ? round(file_download_speed_all_time_values[file_download_speed_all_time_values.length - 1][1], 2) : 0,
+						}
+					]}
+					graphs={[
+						{
+							id: 'chunk_retrieval_duration_24h',
+							title: 'Historical Trend: Chunk Retrieval Time (Weekly Avg. of 24h Time)',
+							type: 'bar',
+							tooltip: 'Historical trend showing the weekly average of the daily (24h) chunk retrieval time. Each point represents the average of all daily values within that calendar week.',
+							data: chunkRetrievalDuration24hGraph,
+						},
+						{
+							id: 'file_download_speed_24h',
+							title: 'Historical Trend: File Download Speed (Weekly Avg. of 24h Speed)',
+							type: 'bar',
+							tooltip: 'Historical trend showing the weekly average of the daily (24h) file download speed. Each point represents the average of all daily values within that calendar week.',
+							data: fileDownloadSpeed24hGraph,
+						}
+					]}
+				/>
+			</div>
 		</div>
 	</main>
 </Layout>
