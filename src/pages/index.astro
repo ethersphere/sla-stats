@@ -10,13 +10,6 @@ interface ApiMetric {
     values: DataPoint[];
 }
 
-interface WeeklyDataAccumulator {
-  [key: string]: {
-    values: number[];
-    firstTimestamp: string;
-  };
-}
-
 // Fetch data from the API
 const apiData = await fetch('https://sla.ethswarm.org/api/v1/all').then((res) => res.json());
 
@@ -25,45 +18,6 @@ const apiData = await fetch('https://sla.ethswarm.org/api/v1/all').then((res) =>
 function round(value: number, decimals = 2): number {
     if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
     return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
-}
-
-function getWeekNumber(d: Date): number {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-    return weekNo;
-}
-
-/**
- * Aggregates daily time-series data into weekly averages.
- * FIXED: Uses the first timestamp of the week for plotting.
- */
-function aggregateDataByWeek(dailyData: DataPoint[]): DataPoint[] {
-    if (!dailyData || dailyData.length === 0) {
-        return [];
-    }
-    const weeklyData: WeeklyDataAccumulator = {};
-    dailyData.forEach(([timestamp, value]: DataPoint) => {
-        const date = new Date(timestamp);
-        const year = date.getUTCFullYear();
-        const week = getWeekNumber(date);
-        const key = `${year}-${week}`;
-        if (!weeklyData[key]) {
-            weeklyData[key] = {
-                values: [],
-                firstTimestamp: timestamp
-            };
-        }
-        weeklyData[key].values.push(value);
-    });
-    const weeklyAverages = Object.keys(weeklyData).map(key => {
-        const week = weeklyData[key];
-        const sum = week.values.reduce((acc: number, val: number) => acc + val, 0);
-        const average = sum / week.values.length;
-        return [week.firstTimestamp, average] as DataPoint;
-    });
-    return weeklyAverages.sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
 }
 
 // Safely access data using optional chaining (?.) and the nullish coalescing operator (??)
@@ -81,12 +35,13 @@ const upload_success_all_time_values = safeGetValues(apiData.upload_success_all_
 const chunk_retrieval_duration_all_time_values = safeGetValues(apiData.chunk_retrieval_duration_all_time);
 const file_download_speed_all_time_values = safeGetValues(apiData.file_download_speed_all_time);
 
-const downloadSuccess24hGraph = aggregateDataByWeek(download_success_24h_values.slice(-graphLookbackDays));
-const uploadSuccess24hGraph = aggregateDataByWeek(upload_success_24h_values.slice(-graphLookbackDays));
-const chunkRetrievalRate24hGraph = aggregateDataByWeek(chunk_retrieval_rate_24h_values.slice(-graphLookbackDays));
-const fileRetrievalRate24hGraph = aggregateDataByWeek(file_retrieval_rate_24h_values.slice(-graphLookbackDays));
-const chunkRetrievalDuration24hGraph = aggregateDataByWeek(chunk_retrieval_duration_24h_values.slice(-graphLookbackDays));
-const fileDownloadSpeed24hGraph = aggregateDataByWeek(file_download_speed_24h_values.slice(-graphLookbackDays));
+// ** THE FIX IS HERE: We no longer aggregate by week and just pass the daily data to the graphs **
+const downloadSuccess24hGraph = download_success_24h_values.slice(-graphLookbackDays);
+const uploadSuccess24hGraph = upload_success_24h_values.slice(-graphLookbackDays);
+const chunkRetrievalRate24hGraph = chunk_retrieval_rate_24h_values.slice(-graphLookbackDays);
+const fileRetrievalRate24hGraph = file_retrieval_rate_24h_values.slice(-graphLookbackDays);
+const chunkRetrievalDuration24hGraph = chunk_retrieval_duration_24h_values.slice(-graphLookbackDays);
+const fileDownloadSpeed24hGraph = file_download_speed_24h_values.slice(-graphLookbackDays);
 ---
 
 <Layout title="Swarm Dashboard">
