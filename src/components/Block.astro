@@ -169,7 +169,7 @@ const { title, description, cards, graphs } = Astro.props;
                     data,
                     pointBorderColor,
                     pointBackgroundColor,
-                    backgroundColor, // This is the correct property for the fill
+                    backgroundColor,
                     pointRadius: 4,
                     pointHoverRadius: 6
                 }]
@@ -189,7 +189,7 @@ const { title, description, cards, graphs } = Astro.props;
                         },
                     },
                     x: {
-                        type: 'time', // Correctly treat x-axis as a time series
+                        type: 'time',
                         time: {
                             unit: 'week',
                             tooltipFormat: 'MMM d, yyyy'
@@ -243,8 +243,8 @@ const { title, description, cards, graphs } = Astro.props;
             gradientThorsThunder.addColorStop(1, 'rgba(110,200,250,0)');
 
             let options = baseOptions({
-                labels: data.map(row => row[0]),
-                data: data.map(row => row[1]),
+                labels: data.map((row: [string, number]) => row[0]),
+                data: data.map((row: [string, number]) => row[1]),
                 backgroundColor: gradientGreen,
                 pointBorderColor: '#7A8E8F',
                 pointBackgroundColor: '#2D3843',
@@ -253,13 +253,13 @@ const { title, description, cards, graphs } = Astro.props;
                 gridColor: '#37434F'
             });
 
-            // --- THE FIX IS APPLIED HERE: Changed all .fillColor to .backgroundColor ---
+            // --- THIS IS THE FIX: Added types to the 'row' parameter in reduce functions ---
             if (element.id === "upload_success_24h") {
                 options.data.datasets[0].backgroundColor = gradientBlue;
             }
 
             if (element.id === "file_retrieval_rate_24h") {
-                options.options.scales.y.min = 0;
+                 options.options.scales.y.min = 0;
                 options.options.scales.y.max = 100;
                 options.data.datasets[0].backgroundColor = gradientCandyGrapeFizz;
             }
@@ -272,9 +272,9 @@ const { title, description, cards, graphs } = Astro.props;
 
             if (element.id === "chunk_retrieval_duration_24h") {
                 options.data.datasets[0].backgroundColor = gradientNearMoon;
-                let min = data.reduce((min, row) => Math.min(min, row[1]), 60);
+                let min = data.reduce((min: number, row: [string, number]) => Math.min(min, row[1]), 60);
                 min = Math.floor(min / 10) * 10 - 10;
-                let max = data.reduce((max, row) => Math.max(max, row[1]), 140);
+                let max = data.reduce((max: number, row: [string, number]) => Math.max(max, row[1]), 140);
                 max = Math.ceil(max / 10) * 10 + 10;
                 options.options.scales.y.min = min;
                 options.options.scales.y.max = max;
@@ -282,9 +282,9 @@ const { title, description, cards, graphs } = Astro.props;
 
             if (element.id === "file_download_speed_24h") {
                 options.data.datasets[0].backgroundColor = gradientThorsThunder;
-                let min = data.reduce((min, row) => Math.min(min, row[1]), 0.8);
+                let min = data.reduce((min: number, row: [string, number]) => Math.min(min, row[1]), 0.8);
                 min = Math.floor(min * 20) / 20 - 0.05;
-                let max = data.reduce((max, row) => Math.max(max, row[1]), 1.3);
+                let max = data.reduce((max: number, row: [string, number]) => Math.max(max, row[1]), 1.3);
                 max = Math.ceil(max * 20) / 20 + 0.05;
                 options.options.scales.y.min = min;
                 options.options.scales.y.max = max;
@@ -298,4 +298,3 @@ const { title, description, cards, graphs } = Astro.props;
         }
     })();
 </script>
-
