@@ -20,6 +20,29 @@ function round(value: number, decimals = 2): number {
     return Math.floor((value + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
+function aggregateDataByDay(values: DataPoint[]): DataPoint[] {
+    if (!values || values.length === 0) {
+        return [];
+    }
+
+    const groupedByDay = values.reduce((acc, [timestamp, value]) => {
+        const day = timestamp.split('T')[0]; // Group by YYYY-MM-DD
+        if (!acc[day]) {
+            acc[day] = [];
+        }
+        acc[day].push(value);
+        return acc;
+    }, {} as Record<string, number[]>);
+
+    const aggregated = Object.entries(groupedByDay).map(([day, dailyValues]) => {
+        const sum = dailyValues.reduce((a, b) => a + b, 0);
+        const avg = sum / dailyValues.length;
+        return [day, avg] as DataPoint;
+    });
+
+    return aggregated;
+}
+
 // Safely access data using optional chaining (?.) and the nullish coalescing operator (??)
 const safeGetValues = (metric: ApiMetric | undefined) => metric?.values ?? [];
 
@@ -35,13 +58,13 @@ const upload_success_all_time_values = safeGetValues(apiData.upload_success_all_
 const chunk_retrieval_duration_all_time_values = safeGetValues(apiData.chunk_retrieval_duration_all_time);
 const file_download_speed_all_time_values = safeGetValues(apiData.file_download_speed_all_time);
 
-// ** THE FIX IS HERE: We no longer aggregate by week and just pass the daily data to the graphs **
-const downloadSuccess24hGraph = download_success_24h_values.slice(-graphLookbackDays);
-const uploadSuccess24hGraph = upload_success_24h_values.slice(-graphLookbackDays);
-const chunkRetrievalRate24hGraph = chunk_retrieval_rate_24h_values.slice(-graphLookbackDays);
-const fileRetrievalRate24hGraph = file_retrieval_rate_24h_values.slice(-graphLookbackDays);
-const chunkRetrievalDuration24hGraph = chunk_retrieval_duration_24h_values.slice(-graphLookbackDays);
-const fileDownloadSpeed24hGraph = file_download_speed_24h_values.slice(-graphLookbackDays);
+// Aggregate the raw data to get one average value per day
+const downloadSuccess24hGraph = aggregateDataByDay(download_success_24h_values).slice(-graphLookbackDays);
+const uploadSuccess24hGraph = aggregateDataByDay(upload_success_24h_values).slice(-graphLookbackDays);
+const chunkRetrievalRate24hGraph = aggregateDataByDay(chunk_retrieval_rate_24h_values).slice(-graphLookbackDays);
+const fileRetrievalRate24hGraph = aggregateDataByDay(file_retrieval_rate_24h_values).slice(-graphLookbackDays);
+const chunkRetrievalDuration24hGraph = aggregateDataByDay(chunk_retrieval_duration_24h_values).slice(-graphLookbackDays);
+const fileDownloadSpeed24hGraph = aggregateDataByDay(file_download_speed_24h_values).slice(-graphLookbackDays);
 ---
 
 <Layout title="Swarm Dashboard">
