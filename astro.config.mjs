@@ -1,15 +1,13 @@
 import { defineConfig } from "astro/config";
-import tailwind from "@astrojs/tailwind";
 import relativeLinks from "astro-relative-links";
-
 import alpinejs from "@astrojs/alpinejs";
+import tailwindcss from "@tailwindcss/vite"; // <-- Add this new import
 
 // https://astro.build/config
 export default defineConfig({
   trailingSlash: "always",
-  integrations: [
-    tailwind({ applyBaseStyles: false }),
-    relativeLinks(),
-    alpinejs(),
-  ],
+  integrations: [relativeLinks(), alpinejs()],
+  vite: {
+    plugins: [tailwindcss()],
+  },
 });
