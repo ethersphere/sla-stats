@@ -34,7 +34,7 @@ const { title, description, cards, graphs } = Astro.props;
             {cards.map(({id, title, type = "percentage", value, unit = "%", color, tooltip = false}, index) => (
                 <div class={`relative${(cards.length === 2 && index === 1 ? " lg:col-start-3" : "")}`}>
                     {type === "percentage" && (
-                        <div class="rounded-full aspect-square bg-[#2D3843]/60 p-[14px] flex flex-col items-center justify-center text-center font-bold border-[8px] border-[#2D3843]">
+                        <div class="relative rounded-full aspect-square bg-[#2D3843]/60 p-[14px] flex flex-col items-center justify-center text-center font-bold border-8 border-[#2D3843]">
 
 
                         <svg class="pointer-events-none -rotate-90 absolute w-[calc(100%-16px)] h-[calc(100%-16px)] z-10" class="round" viewBox="0 0 239 239" fill="none"  >
@@ -55,8 +55,8 @@ const { title, description, cards, graphs } = Astro.props;
                     )}
 
                     {type === "number" && (
-                        <div class="aspect-square bg-[#2D3843]/60 px-[28px] pt-12 font-bold border-[8px] border-[#2D3843] rounded-xl">
-                            <div class={`h-5 w-full bg-gradient-to-l from-[${color}]`}></div>
+                        <div class="aspect-square bg-[#2D3843]/60 px-[28px] pt-12 font-bold border-8 border-[#2D3843] rounded-xl">
+                            <div class={`h-5 w-full bg-linear-to-l from-[${color}]`}></div>
                             <div class={`mt-8 text-[30px] text-[${color}]` }>{value} {unit}</div>
                             <div class="mt-1 w-[148px] text-xs leading-[19px]">
                                 {title}
