@@ -173,10 +173,10 @@ const { title, description, cards, graphs } = Astro.props;
                 scales: {
                     y: { min, max, border: { display: false }, grid: { color: gridColor, drawTicks: true } },
                     x: {
-                        type: 'time', // CRITICAL FIX
+                        type: 'time',
                         time: { unit: 'week', tooltipFormat: 'MMM d, yyyy' },
                         grid: { display: false },
-                        ticks: { display: false }
+                        ticks: { display: true }
                     }
                 },
                 interaction: { intersect: false, },
